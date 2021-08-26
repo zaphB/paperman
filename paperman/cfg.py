@@ -10,7 +10,9 @@ except:
   pass
 
 _DEFAULT_CFG = dict(
-  debug = False
+  debug = False,
+  max_directory_depth = 5,
+  graphics_extensions = ['jpg', 'pdf', 'png']
 )
 
 _REQUIRED_CFG = dict()

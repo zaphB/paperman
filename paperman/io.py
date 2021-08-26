@@ -11,6 +11,8 @@ _LOGFILE_NAME        = 'paperman.log'
 _ROTATE_DIR          = 'oldlogs'
 _IS_INIT             = False
 
+isVerbose            = False
+
 
 def _logger():
   return logging.getLogger('paperman')
@@ -43,7 +45,7 @@ def setLogfile(name):
   global _IS_INIT, _LOGFILE_NAME
   name = str(name)
   if '/' in name:
-    raise RuntimeError(f'logfile name must not contain a slash "/" : {name}')
+    raise ValueError(f'logfile name must not contain a slash "/" : {name}')
   if not name.endswith('.log'):
     name += '.log'
   _logger().handlers.clear()
@@ -85,6 +87,14 @@ def info(*msg, logOnly=False):
   msg = _indentMsg(msg)
   _logger().info(msg)
   if not logOnly:
+    print(msg)
+
+
+def verb(*msg, logOnly=False):
+  _init()
+  msg = _indentMsg(msg)
+  _logger().debug(msg)
+  if not logOnly and (isVerbose or cfg.get('debug')):
     print(msg)
 
 

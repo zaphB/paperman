@@ -1,7 +1,6 @@
 from . import io
 from . import cfg
 from . import utils
-from . import __main__
 
 
 # try to extract version info
