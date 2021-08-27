@@ -18,9 +18,6 @@ class TexFile:
     self._includes = None
     self._graphicspath = None
 
-    # if file is cached, no need to load anything
-    common.cache(path, self.__dict__)
-
 
   def __repr__(self):
     return f'tex file: {self.path}'
