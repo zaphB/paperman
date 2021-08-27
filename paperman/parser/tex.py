@@ -7,11 +7,12 @@ from .img import ImgFile
 
 
 class TexFile:
-  def __init__(self, path):
+  def __init__(self, path, toplevel=None):
     if not os.path.exists(path):
       raise RuntimeError(f'file {path} does not exist')
 
     self.path = os.path.normpath(path)
+    self.toplevel = toplevel
     self._content = None
     self._isToplevel = None
     self._includes = None
@@ -39,7 +40,8 @@ class TexFile:
         fname = m.groups()[-1]
         if not fname.endswith('.tex'):
           fname += '.tex'
-        res.append(TexFile(common.pathRelTo(self, fname)))
+        res.append(TexFile(common.pathRelTo(self, fname),
+                           toplevel=(self.toplevel or self)))
       self._includes = res
       if self._includes:
         io.verb(f'found include files of {self.path}: ',
@@ -49,9 +51,10 @@ class TexFile:
 
   def isToplevel(self):
     if self._isToplevel is None:
-      self._isToplevel = all([re.search(s, self.content())
+      self._isToplevel = (all([re.search(s, self.content())
                               for s in (r'\\begin\{document\}',
                                         r'\\end\{document\}')])
+                          and self.toplevel is None)
     return self._isToplevel
 
 
@@ -73,14 +76,17 @@ class TexFile:
         detectedPaths(i.graphicspath(paths=paths, latexlines=latexlines))
 
       # scan self
-      for m in re.finditer(r'.*\\graphicspath\{(\s*\{[^{}]+\}\s*)+\}.*',
+      for m in re.finditer(r'.*\\graphicspath\{((\s*\{[^{}]+\}\s*)+)\}.*',
                            self.content()):
         latexlines.append([self.path, m.string[m.start():m.end()]])
-        detectedPaths([common.pathRelTo(self, p[1:-1]) for p in m.groups()])
+        _p = [m.groups()[0] for m in re.finditer(r'\{([^{}]*)\}',
+                                                    re.sub(r'\s+', '', m.groups()[0]))]
+        detectedPaths([common.pathRelTo(self, p) for p in _p])
+
       for p in paths:
         if not os.path.isdir(p):
-          io.warn(f'found graphicspath {p}, which does not exist')
-      self._graphicspath = paths
+          io.dbg(f'found graphicspath {p}, which does not exist, ignoring')
+      self._graphicspath = [p for p in paths if os.path.isdir(p)]
       if self._graphicspath:
         io.verb(f'found graphicspaths of {self.path}: '
                 f'{", ".join(self._graphicspath)}')
@@ -99,7 +105,7 @@ class TexFile:
         res.append(file)
         if os.path.sep in file.fname:
           io.warn(r'found \includegraphics call with path instead of name:',
-                  m.string[m.start(), m.end()],
-                  r'it is recommended to define image folders with \graphicspath{} '
+                  m.string[m.start():m.end()],
+                  r'it is recommended to define image folders with \graphicspath{} ',
                   f'centrally and to use only names in \includegraphics calls')
     return res

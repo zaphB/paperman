@@ -28,12 +28,6 @@ commitHash = subprocess.run('git rev-parse --short HEAD'.split(),
 
 version = f'{versionTags[-1][1:]}+c{commitHash}'
 
-# if uncommitted changes exist, add '-modified' to version
-if subprocess.run('git diff-index --quiet HEAD --'.split(),
-                  cwd=cwd).returncode != 0:
-  version += 'mod'
-
-
 # if current commit is tagged as release, set release version
 if v := subprocess.run([*'git tag --points-at'.split(),
                         subprocess.run('git branch --show-current'.split(),
@@ -45,6 +39,11 @@ if v := subprocess.run([*'git tag --points-at'.split(),
                             v.split()))
   if len(versionTags) == 1:
     version = versionTags[0][1:]
+
+# if uncommitted changes exist, add '-mod' to version
+if subprocess.run('git diff-index --quiet HEAD --'.split(),
+                  cwd=cwd).returncode != 0:
+  version += ('+' if '+' not in version else '')+'mod'
 
 # replace in setup.py
 result = []

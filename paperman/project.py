@@ -14,41 +14,57 @@ class Project:
     self._includedImgs = None
     self._missingImgs = None
     self._unusedImgs = None
+    self._warnings = []
 
 
   def _walk(self, find):
     # walk through directories and find toplevel tex files
     res = []
-    for root, dirs, files in os.walk('.', topdown=True):
 
-      # abort tree is too deep
-      if root.count(os.sep) > cfg.get('max_directory_depth'):
-        io.warn(f'reached max_directory_depth='
-                f'{cfg.get("max_directory_depth")} when recursing '
-                f'through the current directory, ignoring deeper '
-                f'levels')
-        break
+    # default to current directory only
+    origins = ['.']
 
-      # skip git directories
-      while i := [d for d in dirs if d.startswith('.git')]:
-        dirs.remove(i)
+    # also walk through all found includedirs for graphics if
+    # looking for images
+    if find in ('imgs', ):
+      for t in self.toplevel():
+        for p in t.graphicspath():
+          if p not in origins:
+            origins.append(p)
 
-      # find and open tex files to detect toplevel
-      for f in files:
-        if find in ('toplevel', ):
-          if f.lower().endswith('.tex'):
-            file = parser.TexFile(os.path.join(root, f))
-            if file.isToplevel():
-              res.append(file)
+    # walk through directories
+    for o in origins:
+      for root, dirs, files in os.walk(o, topdown=True):
 
-        if find in ('imgs', ):
-          if (any([f.lower().endswith('.'+e.lower())
-                      for e in cfg.get('graphics_extensions')])
-              # skip pdfs that seem to be builds of tex files
-              and not (f.lower().endswith('.pdf')
-                        and os.path.exists(os.path.join(root, f[:-4]+'.tex')))):
-            file = parser.ImgFile(os.path.join(root, f))
-            res.append(file)
+        # abort tree is too deep
+        if root.count(os.sep) > cfg.get('max_directory_depth'):
+          io.warn(f'reached max_directory_depth='
+                  f'{cfg.get("max_directory_depth")} when recursing '
+                  f'through the current directory, ignoring deeper '
+                  f'levels')
+          break
+
+        # skip git directories
+        while i := [d for d in dirs if d.startswith('.git')]:
+          dirs.remove(i[0])
+
+        # find and open tex files to detect toplevel
+        for f in files:
+          if find in ('toplevel', ):
+            if f.lower().endswith('.tex'):
+              file = parser.TexFile(os.path.join(root, f))
+              if file.isToplevel():
+                res.append(file)
+
+          if find in ('imgs', ):
+            if (any([f.lower().endswith('.'+e.lower())
+                        for e in cfg.get('graphics_extensions')])
+                # skip pdfs that seem to be builds of tex files
+                and not (f.lower().endswith('.pdf')
+                          and os.path.exists(os.path.join(root, f[:-4]+'.tex')))):
+              file = parser.ImgFile(os.path.join(root, f))
+              if file not in res:
+                res.append(file)
     return res
 
 
@@ -109,7 +125,10 @@ class Project:
                             if not f.exists()]
       valid = [f for f in res if '#' not in f.fname]
       if res != valid:
-        io.warn(r'found \includegraphcis{} call with #n in argument, cannot '
-                r'check if image exists for such calls')
+        w = (r'found \includegraphcis{} call with #n in argument, cannot '
+             r'check if image exists for such calls')
+        if w not in self._warnings:
+          self._warnings.append(w)
+        io.warn(w)
       self._missingImgs = valid
     return self._missingImgs

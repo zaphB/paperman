@@ -1,5 +1,6 @@
 import os
 
+from .. import io
 from . import common
 
 
@@ -22,17 +23,28 @@ class ImgFile:
 
   def _filenamesEqual(self, n1, n2):
     if '.' in n1:
-      n1 = n1[:n1.find('.')]
+      n1 = n1[:n1.rfind('.')]
     if '.' in n2:
-      n2 = n2[:n2.find('.')]
+      n2 = n2[:n2.rfind('.')]
     return n1 == n2
 
 
   def __eq__(self, img):
     if hasattr(img, 'path'):
-      return (self.path and img.path
+      res = (self.path and img.path
             and self._filenamesEqual(self.path, img.path))
-    return self.path and self._filenamesEqual(self.path, str(img))
+    else:
+      res = self.path and self._filenamesEqual(self.path, str(img))
+    #io.dbg(f'{self} == {img} -> {res}')
+    return res
+
+
+  def __lt__(self, img):
+    return self.path < img.path
+
+
+  def __gt__(self, img):
+    return self.path > img.path
 
 
   def exists(self):

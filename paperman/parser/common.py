@@ -18,6 +18,8 @@ def cache(path, data):
 def pathRelTo(file, name):
   if type(file) is str:
     path = file
+  elif hasattr(file, 'toplevel') and file.toplevel:
+    return pathRelTo(file.toplevel, name)
   elif hasattr(file, 'path'):
     path = file.path
   return os.path.normpath(
