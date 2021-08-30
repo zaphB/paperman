@@ -10,7 +10,7 @@ class Project:
     self.args = args
     self._toplevel = None
     self._imgFiles = None
-    self._imgFolders = None
+    self._imgDirs = None
     self._includedImgs = None
     self._missingImgs = None
     self._unusedImgs = None
@@ -80,20 +80,20 @@ class Project:
     return self._toplevel
 
 
-  def imgFolders(self):
-    if self._imgFolders is None:
+  def imgDirs(self):
+    if self._imgDirs is None:
       res = []
       for t in self.toplevel():
         for p in t.graphicspath():
           if p not in res:
             res.append(p)
-      self._imgFolders = res
-    return self._imgFolders
+      self._imgDirs = sorted(res)
+    return self._imgDirs
 
 
   def imgFiles(self):
     if self._imgFiles is None:
-      self._imgFiles = self._walk(find='imgs')
+      self._imgFiles = sorted(self._walk(find='imgs'))
     return self._imgFiles
 
 
@@ -104,18 +104,19 @@ class Project:
         for i in t.imgs():
           if i not in res:
             res.append(i)
-      self._includedImgs = res
+      self._includedImgs = sorted(res)
     return self._includedImgs
 
 
   def unusedImgs(self):
     if self._unusedImgs is None:
       res = [f for f in self.imgFiles()
-                if any([f.path.startswith(d) for d in self.imgFolders()])]
+                if any([f.path.startswith(d) for d in self.imgDirs()])]
       for i in self.includedImgs():
         if i in res:
           res.remove(i)
-      self._unusedImgs = res
+
+      self._unusedImgs = sorted(res)
     return res
 
 
@@ -130,5 +131,5 @@ class Project:
         if w not in self._warnings:
           self._warnings.append(w)
         io.warn(w)
-      self._missingImgs = valid
+      self._missingImgs = sorted(valid)
     return self._missingImgs

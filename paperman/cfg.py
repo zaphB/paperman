@@ -12,12 +12,17 @@ except:
 _DEFAULT_CFG = dict(
   debug = False,
   max_directory_depth = 5,
-  graphics_extensions = ['jpg', 'pdf', 'png']
+  graphics_extensions = ['jpg', 'jpeg', 'pdf', 'png'],
+  img_dir_name = 'img',
+  img_search_paths = [],
+  img_search_priority = 'path-order, newest',
+  bib_dir_name = 'bib',
+  bib_search_paths = []
 )
 
 _REQUIRED_CFG = dict()
 
-_CFG_PATH = appdirs.user_config_dir('paperman')
+_CFG_PATH = os.path.join(appdirs.user_config_dir('paperman'), 'paperman.conf')
 _CFG = {}
 _IS_CFG_LOADED = False
 _HAS_TESTED_REQUIRED_KEYS = False

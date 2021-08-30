@@ -3,6 +3,7 @@ import logging.handlers as handlers
 import os
 import traceback
 import appdirs
+from numpy import log10
 
 from . import cfg
 
@@ -72,6 +73,8 @@ def err(*msg, logOnly=False):
   _logger().error(msg)
   if not logOnly:
     print('error:', msg)
+    if '\n' in msg:
+      print()
 
 
 def warn(*msg, logOnly=False):
@@ -80,14 +83,18 @@ def warn(*msg, logOnly=False):
   _logger().warning(msg)
   if not logOnly:
     print('warning:', msg)
+    if '\n' in msg:
+      print()
 
 
-def info(*msg, logOnly=False):
+def info(*msg, logOnly=False, noNewLine=False):
   _init()
   msg = _indentMsg(msg)
   _logger().info(msg)
   if not logOnly:
     print(msg)
+    if '\n' in msg and not noNewLine:
+      print()
 
 
 def verb(*msg, logOnly=False):
@@ -96,6 +103,8 @@ def verb(*msg, logOnly=False):
   _logger().debug(msg)
   if not logOnly and (isVerbose or cfg.get('debug')):
     print(msg)
+    if '\n' in msg:
+      print()
 
 
 def dbg(*msg, logOnly=False):
@@ -104,6 +113,59 @@ def dbg(*msg, logOnly=False):
   _logger().debug(msg)
   if not logOnly and cfg.get('debug'):
     print('debug:', msg)
+    if '\n' in msg:
+      print()
+
+
+def conf(*msg, default=None):
+  _init()
+  msg = _indentMsg(msg)
+  if default is None:
+    msg += ' (y/n)'
+  elif default:
+    msg += ' (Y/n)'
+  else:
+    msg += ' (y/N)'
+  res = None
+  while res is None:
+    _logger().info(msg)
+    print(msg, end=' ')
+    i = input()
+    _logger().info('user input: "'+str(i)+'"')
+    if i.strip() == '':
+      res = default
+    elif i.strip().lower() in ('y', 'yes'):
+      res = True
+    elif i.strip().lower() in ('n', 'no'):
+      res = False
+    if res is None:
+      info('invalid input, expecting (y)es or (n)o\n')
+  return res
+
+
+def select(msg, options, default=None):
+  _msg = (msg+'\n'
+           +'\n'.join([
+               f'{"" if default is None else ("default: " if i+1==default else " "*9)}'
+               f'({i+1:{int(log10(len(options))+1)}d})'
+               f' {str(o)}' for i, o in enumerate(options)]))
+  res = None
+  while res is None:
+    info(_msg, noNewLine=True)
+    i = input()
+    _logger().info('user input: "'+str(i)+'"')
+    if i.strip() == '':
+      res = default
+    else:
+      try:
+        res = int(i)
+        if res < 1 or res > len(options):
+          raise ValueError('value out of range')
+      except ValueError:
+        res = None
+    if res is None:
+      info(f'invalid input, expecting number between 1 and {len(options)}\n')
+  return res-1, options[res-1]
 
 
 def startup():

@@ -23,12 +23,14 @@ def main():
   # options used by multiple subparsers
   def addTexFileArg(parser):
     parser.add_argument('tex_file', default='', nargs='?',
-                        help='main tex file of the document')
+                        help='toplevel tex file of the document')
 
   # img command
   s = sub.add_parser('img', help='image helper: check if unused images exist '
                                  'or import missing images')
   addTexFileArg(s)
+  s.add_argument('-i', '--import', action='store_true',
+                 help='try importing msising images from image library')
 
   # bib command
   s = sub.add_parser('bib', help='bibliography helper: check if unused bib '

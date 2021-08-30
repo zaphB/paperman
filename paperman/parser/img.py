@@ -20,31 +20,30 @@ class ImgFile:
         if self.path is not None:
           break
 
-
-  def _filenamesEqual(self, n1, n2):
-    if '.' in n1:
-      n1 = n1[:n1.rfind('.')]
-    if '.' in n2:
-      n2 = n2[:n2.rfind('.')]
-    return n1 == n2
-
-
-  def __eq__(self, img):
-    if hasattr(img, 'path'):
-      res = (self.path and img.path
-            and self._filenamesEqual(self.path, img.path))
-    else:
-      res = self.path and self._filenamesEqual(self.path, str(img))
-    #io.dbg(f'{self} == {img} -> {res}')
+  def _stripSuffix(self, n):
+    res = n
+    if '.' in n:
+      i = n.rfind('.')
+      if os.path.sep not in n[i:]:
+        res = n[:i]
     return res
 
 
+  def _filenamesEqual(self, n1, n2):
+    return self._stripSuffix(n1) == self._stripSuffix(n2)
+
+
+  def __eq__(self, img):
+    return (self.path and img.path
+            and self._filenamesEqual(self.path, img.path))
+
+
   def __lt__(self, img):
-    return self.path < img.path
+    return self.path and img.path and self.path < img.path
 
 
   def __gt__(self, img):
-    return self.path > img.path
+    return self.path and img.path and self.path > img.path
 
 
   def exists(self):

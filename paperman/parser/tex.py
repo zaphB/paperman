@@ -23,6 +23,18 @@ class TexFile:
     return f'tex file: {self.path}'
 
 
+  def __eq__(self, file):
+    return self.path and file.path and self.path == file.path
+
+
+  def __lt__(self, file):
+    return self.path and file.path and self.path < file.path
+
+
+  def __gt__(self, file):
+    return self.path and file.path and self.path > file.path
+
+
   def content(self):
     if self._content is None:
       self._content = '\n'.join([l for l in open(self.path, 'r')
