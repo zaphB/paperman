@@ -13,12 +13,19 @@ class ImgFile:
       self.path = os.path.normpath(fname)
     else:
       for p in list(paths)+['.']:
-        for f in os.listdir(p):
-          if self._filenamesEqual(f, fname):
-            self.path = os.path.join(p, f)
+        _p = os.path.join(p, os.path.dirname(fname))
+        if os.path.isdir(_p):
+          for f in os.listdir(_p):
+            if self._filenamesEqual(f, os.path.basename(fname)):
+              self.path = os.path.join(p, f)
+              break
+          if self.path is not None:
             break
-        if self.path is not None:
-          break
+
+
+  def containsNewcommandArg(self):
+    return '#' in self.fname
+
 
   def _stripSuffix(self, n):
     res = n
@@ -34,8 +41,10 @@ class ImgFile:
 
 
   def __eq__(self, img):
-    return (self.path and img.path
-            and self._filenamesEqual(self.path, img.path))
+    if self.path and img.path:
+      return self._filenamesEqual(self.path, img.path)
+    return self._filenamesEqual(os.path.basename(self.fname),
+                                os.path.basename(img.fname))
 
 
   def __lt__(self, img):

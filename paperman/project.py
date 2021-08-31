@@ -82,12 +82,9 @@ class Project:
 
   def imgDirs(self):
     if self._imgDirs is None:
-      res = []
-      for t in self.toplevel():
-        for p in t.graphicspath():
-          if p not in res:
-            res.append(p)
-      self._imgDirs = sorted(res)
+      res = [[p for p in t.graphicspath()] for t in self.toplevel()]
+      res = [_p for p in res for _p in p if all([_p in p for p in res])]
+      self._imgDirs = sorted(list(set(res)))
     return self._imgDirs
 
 
@@ -124,7 +121,7 @@ class Project:
     if self._missingImgs is None:
       res = [f for f in self.includedImgs()
                             if not f.exists()]
-      valid = [f for f in res if '#' not in f.fname]
+      valid = [f for f in res if not f.containsNewcommandArg()]
       if res != valid:
         w = (r'found \includegraphcis{} call with #n in argument, cannot '
              r'check if image exists for such calls')

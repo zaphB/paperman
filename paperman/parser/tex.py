@@ -115,6 +115,10 @@ class TexFile:
         if os.path.sep in file.fname:
           io.warn(r'found \includegraphics call with path instead of name:',
                   m.string[m.start():m.end()],
-                  r'it is recommended to define image folders with \graphicspath{} ',
-                  f'centrally and to use only names in \includegraphics calls')
+                  r'it is recommended to define image folders in the preample with',
+                  r'\graphicspath{} and to use only names in \includegraphics '
+                  f'calls, e.g.:',
+                  f'\\graphicspath{{ ... {{{os.path.dirname(file.fname)+os.path.sep}}} ... }}'
+                  f'and',
+                  f'\\includegraphics[ ... ]{{{os.path.basename(file.fname)}}}')
     return res

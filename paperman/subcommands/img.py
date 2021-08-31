@@ -56,14 +56,24 @@ def main(args):
       io.err('no "img_search_paths" configured to import images from')
       return
 
+    # if verbose, print all detected graphicspaths of toplevel tex files
+    for t in proj.toplevel():
+      io.verb(f'detected graphicspaths of toplevel tex file',
+              f'{t.path}:',
+              *[f'  {prettyDirectory(p)}' for p in t.graphicspath()])
+
     # print error and exit in case not iamge directory was detected
     if len(proj.imgDirs()) == 0:
-      io.err('failed to detect image directory for current project')
+      io.err(r'failed to detect image directory for current project,',
+             r'a valid images directory has to be set with \graphicspath{}',
+             r'in all toplevel tex documents of the project')
       return
 
     # if exactly one image directory was detected, use this directory
     elif len(proj.imgDirs()) == 1:
       targetDir = proj.imgDirs()[0]
+      io.verb('found exactly one common graphicspath among all toplevel tex files:',
+              targetDir)
 
     # if more than one image directory was detected, ask user to select one
     else:
