@@ -30,12 +30,35 @@ def main():
                                  'or import missing images')
   addTexFileArg(s)
   s.add_argument('-i', '--import', action='store_true',
-                 help='try importing msising images from image library')
+                 help='try importing missing images from image library')
 
   # bib command
   s = sub.add_parser('bib', help='bibliography helper: check if unused bib '
                                  'entries exist or import missing entries')
   addTexFileArg(s)
+
+  # sort authors command
+  s = sub.add_parser('sort-authors',
+                     help='alphabetic sorting and formatting of author lists '
+                          'for scientific publications and presentations')
+  s.add_argument('authors', nargs='+',
+                 help='comma separated list of authors seperated. Use -s '
+                      'option for a different separator')
+  s.add_argument('-s', '--separator', default=',',
+                 help='separation character in author list')
+  s.add_argument('-f', '--full-name', action='store_true',
+                 help='output full author names.')
+  s.add_argument('--keep-first', action='store_true',
+                 help='keep position of first author in list.')
+  s.add_argument('--keep-last', action='store_true',
+                 help='keep position of last author in list.')
+  s.add_argument('-k', '--keep-first-and-last', action='store_true',
+                 help='keep position of first and last author in list.')
+  s.add_argument('-q', '--quiet', action='store_true',
+                 help='just output the sorted author list, nothing else.')
+  s.add_argument('--no-and', action='store_true',
+                 help='use the separator instead of "and" before the final '
+                      'name and ignore ands in input.')
 
   # enable autocompletion and parse args
   argcomplete.autocomplete(p)
@@ -50,6 +73,9 @@ def main():
 
   elif args.command == 'bib':
     from .subcommands import bib as cmd
+
+  elif args.command == 'sort-authors':
+    from .subcommands import sort_authors as cmd
 
   else:
     io.dbg(f'{args=}')

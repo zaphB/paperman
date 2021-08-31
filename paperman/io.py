@@ -98,13 +98,10 @@ def info(*msg, logOnly=False, noNewLine=False):
 
 
 def verb(*msg, logOnly=False):
-  _init()
-  msg = _indentMsg(msg)
-  _logger().debug(msg)
-  if not logOnly and (isVerbose or cfg.get('debug')):
-    print(msg)
-    if '\n' in msg:
-      print()
+  if isVerbose:
+    info(*msg, logOnly=logOnly)
+  elif cfg.get('debug'):
+    dbg(*msg, logOnly=logOnly)
 
 
 def dbg(*msg, logOnly=False):

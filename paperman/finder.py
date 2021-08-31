@@ -53,6 +53,7 @@ def importImgs(imgs, imgDir):
 
     # copy best match to desired location
     shutil.copy(bestMatch, imgDir)
+    io.dbg(f'copying {bestMatch} -> {imgDir}')
     success.append(img)
 
   return success, failed
