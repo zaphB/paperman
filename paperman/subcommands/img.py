@@ -4,37 +4,12 @@ from .. import cfg
 from .. import io
 from .. import project
 
-
-# return if a path looks like a valid image directory according
-# to the configured image directory name
-def isGoodImageDirectory(p):
-  return (os.path.sep+cfg.get('img_dir_name')+os.path.sep
-                        in os.path.sep+p+os.path.sep)
-
-
-# return prettified directory paths: img -> ./img/, ../a/b -> ../a/b/
-def prettyDirectory(p):
-  if p.startswith('.') or p.startswith(os.path.sep):
-    res = p
-  else:
-    res = '.'+os.path.sep+p
-  if not res.endswith(os.path.sep):
-    res += os.path.sep
-  return res
-
+from .common import *
 
 # main entry point
 def main(args):
-  proj = project.Project(args)
-
-  if len(proj.toplevel()) > 3:
-    if len(proj.toplevel()) > 20:
-      io.info('detected toplevel files: ', *sorted(proj.toplevel())[:20], '...')
-    else:
-      io.info('detected toplevel files: ', *sorted(proj.toplevel()))
-    if not io.conf('detected more than three toplevel files '
-                  f'({len(proj.toplevel())}), continue?', default=False):
-      return
+  if (proj := detectProj(args)) is None:
+    return
 
   unused = proj.unusedImgs()
   if unused:

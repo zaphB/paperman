@@ -4,6 +4,7 @@ import os
 from .. import io
 from . import common
 from .img import ImgFile
+from .bib import BibFile
 
 
 class TexFile:
@@ -17,6 +18,10 @@ class TexFile:
     self._isToplevel = None
     self._includes = None
     self._graphicspath = None
+    self._imgs = None
+    self._bibHealthy = None
+    self._bibs = None
+    self._packageIncludes = None
 
 
   def __repr__(self):
@@ -103,22 +108,89 @@ class TexFile:
 
 
   def imgs(self):
-    res = []
-    for i in self.includes():
-      for file in i.imgs():
+    if self._imgs is None:
+      res = []
+      for i in self.includes():
+        for file in i.imgs():
+          if file not in res:
+            res.append(file)
+      for m in re.finditer(r'.*\\includegraphics(\[[^[\]]*\])?\{([^{}]+)\}.*', self.content()):
+        file = ImgFile(m.groups()[-1], paths=self.graphicspath())
         if file not in res:
           res.append(file)
-    for m in re.finditer(r'.*\\includegraphics(\[[^[\]]*\])?\{([^{}]+)\}.*', self.content()):
-      file = ImgFile(m.groups()[-1], paths=self.graphicspath())
-      if file not in res:
-        res.append(file)
-        if os.path.sep in file.fname:
-          io.warn(r'found \includegraphics call with path instead of name:',
-                  m.string[m.start():m.end()],
-                  r'it is recommended to define image folders in the preample with',
-                  r'\graphicspath{} and to use only names in \includegraphics '
-                  f'calls, e.g.:',
-                  f'\\graphicspath{{ ... {{{os.path.dirname(file.fname)+os.path.sep}}} ... }}'
-                  f'and',
-                  f'\\includegraphics[ ... ]{{{os.path.basename(file.fname)}}}')
-    return res
+          if os.path.sep in file.fname:
+            io.warn(f'in file "{self.path}":',
+                    m.string[m.start():m.end()],
+                    r'it is recommended to define image folders in the preample with',
+                    r'\graphicspath{} and to use only names in \includegraphics '
+                    f'calls, e.g.:',
+                    f'\\graphicspath{{ ... {{{os.path.dirname(file.fname)+os.path.sep}}} ... }}'
+                    f'and',
+                    f'\\includegraphics[ ... ]{{{os.path.basename(file.fname)}}}')
+      self._imgs = res
+    return self._imgs
+
+
+  def bibs(self):
+    if self._bibs is None:
+      res = []
+      if self.toplevel is None:
+        self._packageIncludes = 0
+      for i in self.includes():
+        for b in i.bibs():
+          if b not in res:
+            res.append(b)
+
+      # search for biblatex package loading
+      for m in re.finditer(r'.*\\usepackage(\[[^[\]]*\])?{biblatex}.*',
+                           self.content()):
+        (self.toplevel or self)._packageIncludes += 1
+        options = ''
+        if len(m.groups()):
+          options = m.groups()[0]
+        if not (m := re.search(r'backend\s*=\s*biber', options)):
+          io.warn(f'in file "{self.path}":',
+                  f'{m.string[m.start():m.end()]}'
+                  f'it is recommended to use biblatex with backend=biber option')
+
+      # search for deprectaed natbib and warn
+      for m in re.finditer(r'.*\\usepackage(\[[^[\]]*\])?{natbib}.*',
+                           self.content()):
+        (self.toplevel or self)._packageIncludes += 1
+        io.warn(f'in file "{self.path}":',
+                f'{m.string[m.start():m.end()]}',
+                f'natbib pacakge is deprecated, it is recommended to use',
+                f'the biblatex package with backend=biber instead')
+        (self.toplevel or self)._bibHealthy = False
+
+      # warn if more than one package loading match occured
+      if self.toplevel is None and self._packageIncludes > 1:
+        io.warn(f'bibliography package is included multiple times in file',
+                f'{self.path}')
+
+      # search for bibliography and addbibresource commands
+      for s in ('addbibresource', 'bibliography'):
+        for m in re.finditer(r'.*\\'+s+r'(\[[^[\]]*\])?{([^{}]+)}.*',
+                             self.content()):
+          io.dbg(*m.groups())
+          file = BibFile(common.pathRelTo(self, m.groups()[-1]))
+          if not file.exists():
+            io.warn(f'file "{self.path}" included',
+                    f'bibliography file "{file.path}"',
+                    f'which does not seem to exist')
+            (self.toplevel or self)._bibHealthy = False
+          if file not in res:
+            res.append(file)
+      self._bibs = res
+    return self._bibs
+
+
+  def bibHealthy(self):
+    if self._bibHealthy is None:
+      if self.toplevel and self.toplevel._bibHealthy is not None:
+        self._bibHealthy = self.toplevel._bibHealthy
+      else:
+        self.bibs()
+        if (self.toplevel or self)._bibHealthy is None:
+          self._bibHealthy = True
+    return self._bibHealthy

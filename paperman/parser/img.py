@@ -16,7 +16,7 @@ class ImgFile:
         _p = os.path.join(p, os.path.dirname(fname))
         if os.path.isdir(_p):
           for f in os.listdir(_p):
-            if self._filenamesEqual(f, os.path.basename(fname)):
+            if common.filenamesEqual(f, os.path.basename(fname)):
               self.path = os.path.join(p, f)
               break
           if self.path is not None:
@@ -24,26 +24,13 @@ class ImgFile:
 
 
   def containsNewcommandArg(self):
-    return '#' in self.fname
-
-
-  def _stripSuffix(self, n):
-    res = n
-    if '.' in n:
-      i = n.rfind('.')
-      if os.path.sep not in n[i:]:
-        res = n[:i]
-    return res
-
-
-  def _filenamesEqual(self, n1, n2):
-    return self._stripSuffix(n1) == self._stripSuffix(n2)
+    return common.containsNewcommandArg(self.fname)
 
 
   def __eq__(self, img):
     if self.path and img.path:
-      return self._filenamesEqual(self.path, img.path)
-    return self._filenamesEqual(os.path.basename(self.fname),
+      return common.filenamesEqual(self.path, img.path)
+    return common.filenamesEqual(os.path.basename(self.fname),
                                 os.path.basename(img.fname))
 
 
