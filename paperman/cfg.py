@@ -13,6 +13,7 @@ _DEFAULT_CFG = dict(
   debug = False,
   max_directory_depth = 5,
   graphics_extensions = ['jpg', 'jpeg', 'pdf', 'png'],
+  bibtex_extensions = ['bib', 'bibtex'],
   img_dir_name = 'img',
   img_search_paths = [],
   img_search_priority = 'path-order, newest',

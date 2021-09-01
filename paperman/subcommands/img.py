@@ -11,13 +11,13 @@ def main(args):
   if (proj := detectProj(args)) is None:
     return
 
-  unused = proj.unusedImgs()
+  unused = proj.unusedIncludedImgs()
   if unused:
     io.info('found unused image files:', *sorted(unused))
   else:
     io.info('no unused image files')
 
-  missing = proj.missingImgs()
+  missing = proj.missingIncludedImgs()
   if missing:
     io.info('found missing images:', *sorted(missing))
   elif getattr(args, 'import'):
@@ -38,21 +38,21 @@ def main(args):
               *[f'  {prettyDirectory(p)}' for p in t.graphicspath()])
 
     # print error and exit in case not iamge directory was detected
-    if len(proj.imgDirs()) == 0:
+    if len(proj.commonImageDirs()) == 0:
       io.err(r'failed to detect image directory for current project,',
              r'a valid images directory has to be set with \graphicspath{}',
              r'in all toplevel tex documents of the project')
       return
 
     # if exactly one image directory was detected, use this directory
-    elif len(proj.imgDirs()) == 1:
-      targetDir = proj.imgDirs()[0]
+    elif len(proj.commonImageDirs()) == 1:
+      targetDir = proj.commonImageDirs()[0]
       io.verb('found exactly one common graphicspath among all toplevel tex files:',
               targetDir)
 
     # if more than one image directory was detected, ask user to select one
     else:
-      allDirs = proj.imgDirs()
+      allDirs = proj.commonImageDirs()
       mostProbable = sorted([d for d in allDirs if isGoodImageDirectory(d)])
       remaining = [d for d in allDirs if d not in mostProbable]
       if len(mostProbable) == 1:

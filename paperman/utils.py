@@ -27,3 +27,13 @@ def logExceptionsAndRaise(func):
       io.err(traceback.format_exc(), logOnly=True)
       raise
   return wrapper
+
+
+def cacheReturnValue(func):
+  def wrapper(self, *args, **kwargs):
+    cacheAttr = '_'+func.__name__
+    if (not hasattr(self, cacheAttr)
+         or getattr(self, cacheAttr) is None):
+      setattr(self, cacheAttr, func(self, *args, **kwargs))
+    return getattr(self, cacheAttr)
+  return wrapper

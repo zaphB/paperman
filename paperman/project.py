@@ -2,23 +2,18 @@ import os
 
 from . import cfg
 from . import io
+from . import utils
 from . import parser
 
 
 class Project:
   def __init__(self, args):
     self.args = args
-    self._toplevel = None
-    self._imgFiles = None
-    self._imgDirs = None
-    self._includedImgs = None
-    self._missingImgs = None
-    self._unusedImgs = None
     self._warnings = []
 
 
   def _walk(self, find):
-    # walk through directories and find toplevel tex files
+    # walk through directories and find specified stuff
     res = []
 
     # default to current directory only
@@ -57,10 +52,10 @@ class Project:
                 res.append(file)
 
           if find in ('imgs', ):
-            if (any([f.lower().endswith('.'+e.lower())
-                        for e in cfg.get('graphics_extensions')])
+            if (any([f.endswith('.'+(e[1:] if e.startswith('.') else e))
+                                  for e in cfg.get('graphics_extensions')])
                 # skip pdfs that seem to be builds of tex files
-                and not (f.lower().endswith('.pdf')
+                and not (f.endswith('.pdf')
                           and os.path.exists(os.path.join(root, f[:-4]+'.tex')))):
               file = parser.ImgFile(os.path.join(root, f))
               if file not in res:
@@ -68,65 +63,59 @@ class Project:
     return res
 
 
+  @utils.cacheReturnValue
   def toplevel(self):
-    if self._toplevel is None:
-      if hasattr(self.args, 'tex_file') and self.args.tex_file:
-        self._toplevel = [parser.TexFile(self.args.tex_file)]
-      else:
-        self._toplevel = self._walk(find='toplevel')
-        if self._toplevel:
-          io.verb(f'detected toplevel tex files:',
-                  *[str(t) for t in self._toplevel])
-    return self._toplevel
+    if hasattr(self.args, 'tex_file') and self.args.tex_file:
+      return [parser.TexFile(self.args.tex_file)]
+    else:
+      res = self._walk(find='toplevel')
+      if res:
+        io.verb(f'detected toplevel tex files:',
+                *[str(t) for t in res])
+      return res
 
 
-  def imgDirs(self):
-    if self._imgDirs is None:
-      res = [[p for p in t.graphicspath()] for t in self.toplevel()]
-      res = [_p for p in res for _p in p if all([_p in p for p in res])]
-      self._imgDirs = sorted(list(set(res)))
-    return self._imgDirs
+  @utils.cacheReturnValue
+  def commonImageDirs(self):
+    res = [[p for p in t.graphicspath()] for t in self.toplevel()]
+    res = [_p for p in res for _p in p if all([_p in p for p in res])]
+    return sorted(list(set(res)))
 
 
-  def imgFiles(self):
-    if self._imgFiles is None:
-      self._imgFiles = sorted(self._walk(find='imgs'))
-    return self._imgFiles
+  @utils.cacheReturnValue
+  def allImgFiles(self):
+      return sorted(self._walk(find='imgs'))
 
 
-  def includedImgs(self):
-    if self._includedImgs is None:
-      res = []
-      for t in self.toplevel():
-        for i in t.imgs():
-          if i not in res:
-            res.append(i)
-      self._includedImgs = sorted(res)
-    return self._includedImgs
+  @utils.cacheReturnValue
+  def allIncludedImgs(self):
+    res = []
+    for t in self.toplevel():
+      for i in t.imgs():
+        if i not in res:
+          res.append(i)
+    return sorted(res)
 
 
-  def unusedImgs(self):
-    if self._unusedImgs is None:
-      res = [f for f in self.imgFiles()
-                if any([f.path.startswith(d) for d in self.imgDirs()])]
-      for i in self.includedImgs():
-        if i in res:
-          res.remove(i)
-
-      self._unusedImgs = sorted(res)
-    return res
+  @utils.cacheReturnValue
+  def unusedIncludedImgs(self):
+    res = [f for f in self.allImgFiles()
+              if any([f.path.startswith(d) for d in self.commonImageDirs()])]
+    for i in self.allIncludedImgs():
+      if i in res:
+        res.remove(i)
+    return sorted(res)
 
 
-  def missingImgs(self):
-    if self._missingImgs is None:
-      res = [f for f in self.includedImgs()
-                            if not f.exists()]
-      valid = [f for f in res if not f.containsNewcommandArg()]
-      if res != valid:
-        w = (r'found \includegraphcis{} call with #n in argument, cannot '
-             r'check if image exists for such calls')
-        if w not in self._warnings:
-          self._warnings.append(w)
-        io.warn(w)
-      self._missingImgs = sorted(valid)
-    return self._missingImgs
+  @utils.cacheReturnValue
+  def missingIncludedImgs(self):
+    res = [f for f in self.allIncludedImgs()
+                          if not f.exists()]
+    valid = [f for f in res if not f.containsNewcommandArg()]
+    if res != valid:
+      w = (r'found \includegraphcis{} call with #n in argument, cannot '
+           r'check if image exists for such calls')
+      if w not in self._warnings:
+        self._warnings.append(w)
+      io.warn(w)
+    return sorted(valid)

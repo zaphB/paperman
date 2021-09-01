@@ -1,16 +1,261 @@
 import os
 
+from .. import cfg
+from .. import io
+from .. import utils
 from . import common
+
+from .cite import Citation, FORBIDDEN_KEY_CHARS
 
 
 class BibFile:
-  def __init__(self, path):
-    self.path = os.path.normpath(path)
+  def __init__(self, fname):
+    self.fname = os.path.normpath(fname)
+    if self.exists():
+      self.path = self.exists()
+      self._exists = True
 
 
+  @utils.cacheReturnValue
   def exists(self):
-    d = os.path.dirname(self.path) or '.'
+    d = os.path.dirname(self.fname) or '.'
     if not os.path.isdir(d):
       return False
-    return any([common.filenamesEqual(os.path.basename(self.path), f)
-                                                  for f in os.listdir(d)])
+    for ext in ['']+['.'+(e[1:] if e.startswith('.') else e)
+                              for e in cfg.get('bibtex_extensions')]:
+      candidate = os.path.join(d, os.path.basename(self.fname)+ext)
+      if os.path.isfile(candidate):
+        return candidate
+    return False
+
+
+  @utils.cacheReturnValue
+  def content(self):
+    return '\n'.join([l for l in open(self.path, 'r')])
+
+
+  @utils.cacheReturnValue
+  def citations(self):
+    res = []
+
+    # parsing whole file with a characterwise state machine is the only
+    # safe way to go...
+    state = 'comment'
+    currentSection = None
+    currentKey = None
+    currentItem = None
+    currentValue = None
+    currentLine = 1
+    previousBackslash = False
+    braceDepth = None
+    quoteDepth = None
+    c = None
+
+    def raiseErr(msg):
+      nonlocal currentLine, state, c
+      raise RuntimeError(f'in bib file {self.path} (line {currentLine}):\n'
+                         +(f'parser state "{state}", current char {repr(c)}\n'
+                                                  if cfg.get('debug') else '')
+                         +f'parsing error, {msg}')
+
+    def _assert(expr, msg='unexpected error'):
+      if not expr:
+        raiseErr(msg)
+
+    # function to call whenever an item-value pair is completed
+    def flushItemValue():
+      nonlocal currentItem, currentValue, braceDepth, quoteDepth
+      currentItem = currentItem.strip()
+      _assert(currentItem,
+              'found empty item name')
+      _assert(len(res))
+      if res[-1].fields is None:
+        res[-1].fields = {}
+      if currentItem in res[-1].fields:
+        raiseErr(f'duplicate item "{currentItem}"')
+      res[-1].fields[currentItem] = currentValue.strip()
+      currentValue = None
+      currentItem = None
+      braceDepth = None
+      quoteDepth = None
+
+    for c in self.content():
+      #print(c, end='')
+      #if braceDepth: print(repr(braceDepth), end='')
+
+      # increase line counter on newlines no matter what state
+      if c == '\n':
+        currentLine += 1
+
+      # @ sign while in "comment" -> transition to "section"
+      if c == '@' and state == 'comment':
+        _assert(currentSection is None)
+        currentSection = ''
+        state = 'section'
+
+      # skip all characters outside of sections
+      elif state == 'comment':
+        pass
+
+      # { sign while in "section" -> transition to "key"
+      elif c == '{' and state == 'section':
+        _assert(currentSection is not None)
+        _assert(currentSection.strip().isalpha(),
+                f'invalid section name {repr(currentSection)}')
+        _assert(currentKey is None)
+        currentKey = ''
+        state = 'key'
+
+      # record any other character
+      elif state == 'section':
+        _assert(currentSection is not None)
+        currentSection += c
+
+      # , sign while in "key" -> transition to "item" and flush key and section
+      elif c == ',' and state == 'key':
+        _assert(currentSection is not None
+                  and currentKey is not None)
+        _assert(currentSection,
+                'empty section name')
+        _assert(currentKey,
+                'empty key')
+        res.append(Citation(currentKey,
+                            bibs=[self],
+                            section=currentSection))
+        currentKey = None
+        currentSection = None
+
+        _assert(currentItem is None)
+        currentItem = ''
+        state = 'item'
+
+      # any other character records key
+      elif state == 'key':
+        _assert(currentKey is not None)
+        _assert(c not in FORBIDDEN_KEY_CHARS,
+                f'forbidden charcter in citation key: {repr(c)}')
+        currentKey += c
+
+      # = sign while in "item" -> transition to "value" and flush key and section
+      elif c == '=' and state == 'item':
+        state = 'value'
+        _assert(currentSection is None
+                  and currentKey is None)
+        _assert(braceDepth is None
+                  and quoteDepth is None
+                  and currentValue is None)
+        braceDepth = 0
+        quoteDepth = 0
+        currentValue = ''
+
+      # if a closing curly brace is encountered in item state and the current
+      # item is empty, this means the section has ended, then flush everything
+      # and transition to comment state
+      elif c == '}' and state == 'item':
+        _assert(currentItem.strip() == '')
+        currentItem = None
+        _assert(currentSection is None
+                  and currentKey is None
+                  and currentValue is None)
+        state = 'comment'
+
+      # record all other characters as item name
+      elif state == 'item':
+        _assert(currentItem is not None)
+        currentItem += c
+
+      # nice summary of how {, } and " delimiters are parsed by bibtex:
+      # https://tex.stackexchange.com/questions/109064/is-there-a-difference-between-and-in-bibtex
+      #
+      # value parsing in short:
+      # * do not consume curly braces, always error on unmatched curly braces.
+      # * do not consume double-quotes only count depth and error on unmatched
+      #   double-quotes only if not within {}
+      # * treat single quotes as normal character
+      # * backslash escapes {, }, but still count depth to guarantee matching
+      # * backslash escapes double-quotes
+      # * if any different character follows backslash, treat backslash as
+      #   normal character
+      elif state == 'value':
+
+        # if previous character was a backslash, modify current character
+        # such that it will be treated as normal character
+        if previousBackslash:
+          c = '\\'+c
+          previousBackslash = False
+
+        # do not handle backslash now but only set previousBackslash flag
+        if c == '\\':
+          previousBackslash = True
+
+        # { sign while in "value" -> increment braceDepth
+        elif c == '{':
+          _assert(braceDepth is not None)
+          braceDepth += 1
+          _assert(currentValue is not None)
+          currentValue += c
+
+        # a seemingly unmatched } in value state means that citation is
+        # complete, flush everything and transition to "comment" state
+        elif c == '}' and braceDepth == 0 and quoteDepth == 0:
+          flushItemValue()
+          _assert(currentSection is None
+                    and currentKey is None
+                    and currentItem is None
+                    and currentValue is None)
+          state = 'comment'
+
+        # } sign while in "value" -> decrement braceDepth
+        elif c == '}':
+          _assert(braceDepth is not None and braceDepth > 0,
+                  'found unmatched "}"')
+          braceDepth -= 1
+          _assert(currentValue is not None)
+          currentValue += c
+
+        # " sign while in "value" -> toggle quote depth if not within
+        # curly braces
+        elif c == '"' and state == 'value' and braceDepth == 0:
+          _assert(quoteDepth is not None)
+          quoteDepth = (1 if quoteDepth == 0 else 0)
+
+        # add escaped curly brace to content and also increment depth
+        elif c == r'\{':
+          _assert(braceDepth is not None)
+          braceDepth += 1
+          currentValue += c
+
+        # add escaped curly brace to content and also decrement depth
+        elif c == r'\}':
+          _assert(braceDepth is not None and braceDepth > 0,
+                  'found unmatched "}"')
+          braceDepth -= 1
+          currentValue += c
+
+        # , sign with balanced braces and quotes flushes current item value
+        # pair and leaves value mode
+        elif c == ',' and braceDepth == 0 and quoteDepth == 0:
+          flushItemValue()
+          currentItem = ''
+          state = 'item'
+
+        # any other character is just added to content
+        else:
+          currentValue += c
+
+      else:
+        _assert(state == 'comment',
+                f'unexpected character {repr(c)}')
+
+    #_assert(currentSection is None
+    #            and currentKey is None
+    #            and currentItem is None
+    #            and currentValue is None
+    #            and previousBackslash is False
+    #            and braceDepth is None
+    #            and quoteDepth is None
+    #            and state == 'comment',
+    #        'citation section was started but never ended,\n'
+    #        'probably due to unmatched curly braces')
+
+    return res
