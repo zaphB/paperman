@@ -1,12 +1,5 @@
-import os
-
-from .. import cfg
-from .. import io
-from .. import project
-
 from .common import *
 
-# main entry point
 def main(args):
   if (proj := detectProj(args)) is None:
     return
@@ -37,7 +30,7 @@ def main(args):
               f'{t.path}:',
               *[f'  {prettyDirectory(p)}' for p in t.graphicspath()])
 
-    # print error and exit in case not iamge directory was detected
+    # print error and exit in case no iamge directory was detected
     if len(proj.commonImageDirs()) == 0:
       io.err(r'failed to detect image directory for current project,',
              r'a valid images directory has to be set with \graphicspath{}',
@@ -84,5 +77,5 @@ def main(args):
     if success:
       io.info(f'successfully found and imported {len(success)} images')
     if failed:
-      io.info(f'cound not find the following images:',
+      io.info(f'could not find the following images:',
               *[i.fname for i in failed])

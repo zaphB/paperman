@@ -119,3 +119,53 @@ class Project:
         self._warnings.append(w)
       io.warn(w)
     return sorted(valid)
+
+
+  @utils.cacheReturnValue
+  def allBibs(self):
+    res = []
+    for t in self.toplevel():
+      for b in t.bibs():
+        if b not in res:
+          res.append(b)
+    return res
+
+
+  @utils.cacheReturnValue
+  def allCitesInBibs(self):
+    res = []
+    for t in self.toplevel():
+      for b in t.bibs():
+        for c in b.cites():
+          if c not in res:
+            res.append(c)
+    return sorted(res)
+
+
+  @utils.cacheReturnValue
+  def allCitesInTex(self):
+    res = []
+    for t in self.toplevel():
+      for c in t.cites():
+        if c not in res:
+          res.append(c)
+    return sorted(res)
+
+
+  @utils.cacheReturnValue
+  def unusedCites(self):
+    res = self.allCitesInBibs()
+    for c in self.allCitesInTex():
+      if c in res:
+        res.remove(c)
+    return sorted(res)
+
+
+  @utils.cacheReturnValue
+  def missingCites(self):
+    res = []
+    for t in self.toplevel():
+      for c in t.missingCites():
+        if c not in res:
+          res.append(c)
+    return res

@@ -5,7 +5,7 @@ from .. import io
 from .. import utils
 from . import common
 
-from .cite import Citation, FORBIDDEN_KEY_CHARS
+from .cite import Cite, FORBIDDEN_KEY_CHARS
 
 
 class BibFile:
@@ -31,11 +31,11 @@ class BibFile:
 
   @utils.cacheReturnValue
   def content(self):
-    return '\n'.join([l for l in open(self.path, 'r')])
+    return '\n'.join([l.rstrip('\n') for l in open(self.path, 'r')])
 
 
   @utils.cacheReturnValue
-  def citations(self):
+  def cites(self):
     res = []
 
     # parsing whole file with a characterwise state machine is the only
@@ -53,8 +53,14 @@ class BibFile:
 
     def raiseErr(msg):
       nonlocal currentLine, state, c
+      if cfg.get('debug'):
+        allLines = self.content().split('\n')
+        lines = allLines[max(0, currentLine-5):min(len(allLines), currentLine+5)]
+        pretty = [('=> ' if i+1+max(0, currentLine-5) == currentLine else '>  ')+l
+                    for i, l in enumerate(lines)]
       raise RuntimeError(f'in bib file {self.path} (line {currentLine}):\n'
-                         +(f'parser state "{state}", current char {repr(c)}\n'
+                         +('\n'.join(pretty)+'\n'
+                           +f'parser state "{state}", current char {repr(c)}\n'
                                                   if cfg.get('debug') else '')
                          +f'parsing error, {msg}')
 
@@ -68,6 +74,8 @@ class BibFile:
       currentItem = currentItem.strip()
       _assert(currentItem,
               'found empty item name')
+      _assert(currentItem.isalpha(),
+              'found invalid item name')
       _assert(len(res))
       if res[-1].fields is None:
         res[-1].fields = {}
@@ -82,10 +90,6 @@ class BibFile:
     for c in self.content():
       #print(c, end='')
       #if braceDepth: print(repr(braceDepth), end='')
-
-      # increase line counter on newlines no matter what state
-      if c == '\n':
-        currentLine += 1
 
       # @ sign while in "comment" -> transition to "section"
       if c == '@' and state == 'comment':
@@ -119,9 +123,9 @@ class BibFile:
                 'empty section name')
         _assert(currentKey,
                 'empty key')
-        res.append(Citation(currentKey,
-                            bibs=[self],
-                            section=currentSection))
+        res.append(Cite(currentKey,
+                        bibs=[self],
+                        section=currentSection))
         currentKey = None
         currentSection = None
 
@@ -129,9 +133,23 @@ class BibFile:
         currentItem = ''
         state = 'item'
 
+      # finding closing curly brace in key means bibtex entry without any items,
+      # flush key and section and transition to comment state
+      elif c == '}' and state == 'key':
+        _assert(currentItem is None
+                  and currentValue is None)
+        res.append(Cite(currentKey,
+                        bibs=[self],
+                        section=currentSection))
+        currentKey = None
+        currentSection = None
+        state = 'comment'
+
       # any other character records key
       elif state == 'key':
         _assert(currentKey is not None)
+        _assert(c not in ' \n\t',
+                f'unexpected end of citation key "{currentKey}", expected ","')
         _assert(c not in FORBIDDEN_KEY_CHARS,
                 f'forbidden charcter in citation key: {repr(c)}')
         currentKey += c
@@ -162,6 +180,9 @@ class BibFile:
       # record all other characters as item name
       elif state == 'item':
         _assert(currentItem is not None)
+        _assert(currentItem.strip() == ''
+                    or currentItem.strip().isalpha(),
+                'found invalid item name')
         currentItem += c
 
       # nice summary of how {, } and " delimiters are parsed by bibtex:
@@ -218,6 +239,7 @@ class BibFile:
         elif c == '"' and state == 'value' and braceDepth == 0:
           _assert(quoteDepth is not None)
           quoteDepth = (1 if quoteDepth == 0 else 0)
+          currentValue += c
 
         # add escaped curly brace to content and also increment depth
         elif c == r'\{':
@@ -247,15 +269,20 @@ class BibFile:
         _assert(state == 'comment',
                 f'unexpected character {repr(c)}')
 
-    #_assert(currentSection is None
-    #            and currentKey is None
-    #            and currentItem is None
-    #            and currentValue is None
-    #            and previousBackslash is False
-    #            and braceDepth is None
-    #            and quoteDepth is None
-    #            and state == 'comment',
-    #        'citation section was started but never ended,\n'
-    #        'probably due to unmatched curly braces')
+      # increase line counter on newlines no matter what state
+      if c == '\n':
+        currentLine += 1
+
+
+    _assert(currentSection is None
+                and currentKey is None
+                and currentItem is None
+                and currentValue is None
+                and previousBackslash is False
+                and braceDepth is None
+                and quoteDepth is None
+                and state == 'comment',
+            'citation section was started but never ended,\n'
+            'probably due to unmatched curly braces')
 
     return res

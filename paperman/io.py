@@ -97,6 +97,12 @@ def info(*msg, logOnly=False, noNewLine=False):
       print()
 
 
+def raw(*msg):
+  _init()
+  _logger().info(_indentMsg(msg))
+  print(*msg)
+
+
 def verb(*msg, logOnly=False):
   if isVerbose:
     info(*msg, logOnly=logOnly)

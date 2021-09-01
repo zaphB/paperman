@@ -36,6 +36,9 @@ def main():
   s = sub.add_parser('bib', help='bibliography helper: check if unused bib '
                                  'entries exist or import missing entries')
   addTexFileArg(s)
+  s.add_argument('-i', '--import', action='store_true',
+                 help='try importing missing citations from existing '
+                      'bibliographies')
 
   # sort authors command
   s = sub.add_parser('sort-authors',

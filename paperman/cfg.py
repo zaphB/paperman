@@ -17,8 +17,9 @@ _DEFAULT_CFG = dict(
   img_dir_name = 'img',
   img_search_paths = [],
   img_search_priority = 'path-order, newest',
-  bib_dir_name = 'bib',
-  bib_search_paths = []
+  bib_dir_name = 'tex',
+  bib_search_paths = [],
+  bib_search_priority = 'path-order, newest'
 )
 
 _REQUIRED_CFG = dict()

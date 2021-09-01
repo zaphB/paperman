@@ -7,7 +7,7 @@ from . import common
 
 from .bib import BibFile
 from .img import ImgFile
-from .cite import Citation
+from .cite import Cite
 
 class TexFile:
   def __init__(self, path, toplevel=None):
@@ -38,7 +38,7 @@ class TexFile:
 
   @utils.cacheReturnValue
   def content(self):
-    return '\n'.join([l for l in open(self.path, 'r')
+    return '\n'.join([l.rstrip('\n') for l in open(self.path, 'r')
                         if not l.strip().startswith('%')])
 
 
@@ -200,7 +200,12 @@ class TexFile:
       for s in m.groups()[-1].split():
         for _s in s.split(','):
           if _s.strip():
-            cite = Citation(_s.strip(), self.bibs())
+            cite = Cite(_s.strip(), self.bibs())
             if cite not in res:
               res.append(cite)
     return res
+
+
+  @utils.cacheReturnValue
+  def missingCites(self):
+    return [c for c in self.cites() if not c.exists()]

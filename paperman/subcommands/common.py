@@ -1,6 +1,7 @@
 import os
 
 from .. import project
+from .. import cfg
 from .. import io
 
 # return if a path looks like a valid image directory according
