@@ -75,7 +75,10 @@ def main(args):
 
     # report results
     if success:
-      io.info(f'successfully found and imported {len(success)} images')
+      if len(success) == 1:
+        io.info(f'successfully found and imported image')
+      else:
+        io.info(f'successfully found and imported {len(success)} images')
     if failed:
       io.info(f'could not find the following images:',
               *[i.fname for i in failed])

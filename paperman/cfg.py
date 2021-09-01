@@ -19,7 +19,10 @@ _DEFAULT_CFG = dict(
   img_search_priority = 'path-order, newest',
   bib_dir_name = 'tex',
   bib_search_paths = [],
-  bib_search_priority = 'path-order, newest'
+  bib_search_priority = 'path-order, newest',
+  bib_ignore_fields = ['abstract'],
+  z_bib_words_protect_capitalization = [],
+  z_bib_words_dont_protect_capitalization = []
 )
 
 _REQUIRED_CFG = dict()

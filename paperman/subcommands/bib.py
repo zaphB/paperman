@@ -41,10 +41,13 @@ def main(args):
 
         # report results
         if success:
-          io.info(f'successfully found {len(success)} citations')
+          if len(success) == 1:
+            io.info(f'successfully found citation')
+          else:
+            io.info(f'successfully found {len(success)} citations')
+          io.info(f'copy the following into the bibliography file of',
+                  t.path)
+          io.raw('\n\n'.join([c.pretty() for c in success])+'\n')
         if failed:
           io.info(f'could not find the following citations:',
-                  *[i.fname for i in failed])
-        io.info(f'copy the following into the bibliography file of',
-                t.path)
-        io.raw('\n\n'.join([c.pretty() for c in success])+'\n')
+                  *[f'"{c.key}"' for c in failed])

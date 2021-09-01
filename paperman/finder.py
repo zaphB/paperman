@@ -13,14 +13,15 @@ def _candidateSortKey(rules):
     res = ''
     for r in rules:
       if 'path-order' in r:
-        res += f'{pathNo:04d}'
+        res += f'_{pathNo:04d}'
       elif 'newest' in r:
-        res += f'{2**64-os.path.getmtime(path)}'
+        res += f'_{2**64-os.path.getmtime(path)}'
       elif 'oldest' in r:
-        res += f'{os.path.getmtime(path)}'
+        res += f'_{os.path.getmtime(path)}'
       else:
         raise RuntimeError(f'unknown priority rule {r}')
-      return res
+    return res
+  return key
 
 
 def importImgs(imgs, imgDir):
@@ -101,7 +102,10 @@ def importCites(cites):
 
     # generate sorting function according to config
     rules = cfg.get('bib_search_priority').split()
-    _, _, bestMatch = sorted(candidates, key=_candidateSortKey(rules))[0]
+    _, _path, bestMatch = sorted(candidates, key=_candidateSortKey(rules))[0]
+    io.verb(f'best match for citation with key "{cite.key}"',
+            f'found in file',
+            f'{_path}')
     success.append(bestMatch)
 
   return success, failed

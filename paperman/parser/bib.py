@@ -45,6 +45,7 @@ class BibFile:
     currentKey = None
     currentItem = None
     currentValue = None
+    currentValueParseInfo = None
     currentLine = 1
     previousBackslash = False
     braceDepth = None
@@ -70,7 +71,7 @@ class BibFile:
 
     # function to call whenever an item-value pair is completed
     def flushItemValue():
-      nonlocal currentItem, currentValue, braceDepth, quoteDepth
+      nonlocal currentItem, currentValue, currentValueParseInfo, braceDepth, quoteDepth
       currentItem = currentItem.strip()
       _assert(currentItem,
               'found empty item name')
@@ -79,10 +80,14 @@ class BibFile:
       _assert(len(res))
       if res[-1].fields is None:
         res[-1].fields = {}
+      if res[-1].fieldsParseInfo is None:
+        res[-1].fieldsParseInfo = {}
       if currentItem in res[-1].fields:
         raiseErr(f'duplicate item "{currentItem}"')
       res[-1].fields[currentItem] = currentValue.strip()
+      res[-1].fieldsParseInfo[currentItem] = currentValueParseInfo
       currentValue = None
+      currentValueParseInfo = None
       currentItem = None
       braceDepth = None
       quoteDepth = None
@@ -107,8 +112,15 @@ class BibFile:
         _assert(currentSection.strip().isalpha(),
                 f'invalid section name {repr(currentSection)}')
         _assert(currentKey is None)
-        currentKey = ''
-        state = 'key'
+
+        # special case section=comment: immediately transition
+        # back to comment state
+        if currentSection.strip().lower() == 'comment':
+          currentSection = None
+          state = 'comment'
+        else:
+          currentKey = ''
+          state = 'key'
 
       # record any other character
       elif state == 'section':
@@ -165,6 +177,7 @@ class BibFile:
         braceDepth = 0
         quoteDepth = 0
         currentValue = ''
+        currentValueParseInfo = dict(opens=[], closes=[])
 
       # if a closing curly brace is encountered in item state and the current
       # item is empty, this means the section has ended, then flush everything
@@ -214,6 +227,7 @@ class BibFile:
           _assert(braceDepth is not None)
           braceDepth += 1
           _assert(currentValue is not None)
+          currentValueParseInfo['opens'].append(len(currentValue.lstrip()))
           currentValue += c
 
         # a seemingly unmatched } in value state means that citation is
@@ -232,12 +246,17 @@ class BibFile:
                   'found unmatched "}"')
           braceDepth -= 1
           _assert(currentValue is not None)
+          currentValueParseInfo['closes'].append(len(currentValue.lstrip()))
           currentValue += c
 
         # " sign while in "value" -> toggle quote depth if not within
-        # curly braces
+        # curly braces, add to currentValue anyways
         elif c == '"' and state == 'value' and braceDepth == 0:
           _assert(quoteDepth is not None)
+          if quoteDepth:
+            currentValueParseInfo['closes'].append(len(currentValue.lstrip()))
+          else:
+            currentValueParseInfo['opens'].append(len(currentValue.lstrip()))
           quoteDepth = (1 if quoteDepth == 0 else 0)
           currentValue += c
 
@@ -272,7 +291,6 @@ class BibFile:
       # increase line counter on newlines no matter what state
       if c == '\n':
         currentLine += 1
-
 
     _assert(currentSection is None
                 and currentKey is None
