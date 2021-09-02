@@ -76,10 +76,6 @@ def importCites(cites):
     # append unedited path
     searchPaths.append(p)
 
-    # if no **-globb pattern detected, add standard one and add to list
-    if '*' not in p:
-      searchPaths.append(os.path.join(p, '**', cfg.get('bib_dir_name')))
-
   # iterate through requested images and try to import
   for cite in cites:
     candidates = []

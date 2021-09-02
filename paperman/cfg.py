@@ -17,10 +17,18 @@ _DEFAULT_CFG = dict(
   img_dir_name = 'img',
   img_search_paths = [],
   img_search_priority = 'path-order, newest',
-  bib_dir_name = 'tex',
   bib_search_paths = [],
   bib_search_priority = 'path-order, newest',
-  bib_ignore_fields = ['abstract'],
+  bib_repair = dict(
+    make_all_items_lowercase = True,
+    remove_fields = ['abstract'],
+    generate_url_from_doi = True,
+    force_double_hyphen_in_pages = True,
+    convert_month_to_number = True,
+    convert_journal_to_iso4_abbr = True,
+    convert_journal_to_fullname = False,
+    protect_capitalization_if_unprotected = True
+  ),
   z_bib_words_protect_capitalization = [],
   z_bib_words_dont_protect_capitalization = []
 )

@@ -135,6 +135,8 @@ def conf(*msg, default=None):
     print(msg, end=' ')
     i = input()
     _logger().info('user input: "'+str(i)+'"')
+    if '\n' in msg:
+      print()
     if i.strip() == '':
       res = default
     elif i.strip().lower() in ('y', 'yes'):
@@ -157,6 +159,8 @@ def select(msg, options, default=None):
     info(_msg, noNewLine=True)
     i = input()
     _logger().info('user input: "'+str(i)+'"')
+    if '\n' in _msg:
+      print()
     if i.strip() == '':
       res = default
     else:
