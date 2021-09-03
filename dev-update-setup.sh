@@ -23,6 +23,17 @@ versionTags = (['v0.0.0']
                                            capture_output=True)
                                                .stdout.decode().split('\n'))))
 
+# try to read current version from setup.py and add to versionTags list
+# if it is newer than latest tagged version
+if m := re.search(r"version\s*=\s*['\"](\d+)\.(\d+)\.(\d+)+?.*['\"]",
+                  open('setup.py').read()):
+  ep, major, minor = [int(i) for i in m.groups()]
+  _ep, _major, _minor = [int(i) for i in versionTags[-1][1:].split('.')]
+  if (ep>_ep
+        or (ep==_ep and major>_major)
+        or (ep==_ep and major==_major and minor>_minor)):
+    versionTags.append(f'v{ep}.{major}.{minor}')
+
 commitHash = subprocess.run('git rev-parse --short HEAD'.split(),
                             capture_output=True,
                             cwd=cwd).stdout.decode().strip()
