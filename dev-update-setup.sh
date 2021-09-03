@@ -2,6 +2,7 @@
 
 import subprocess
 import re
+import sys
 from os import path
 
 cwd = path.dirname(__file__)
@@ -26,7 +27,7 @@ commitHash = subprocess.run('git rev-parse --short HEAD'.split(),
                             capture_output=True,
                             cwd=cwd).stdout.decode().strip()
 
-version = f'{versionTags[-1][1:]}+c{commitHash}'
+version = f'{versionTags[-1][1:]}+H{commitHash}'
 
 # if current commit is tagged as release, set release version
 if v := subprocess.run([*'git tag --points-at'.split(),
@@ -45,6 +46,11 @@ if subprocess.run('git diff-index --quiet HEAD --'.split(),
                   cwd=cwd).returncode != 0:
   version += ('+' if '+' not in version else '')+'mod'
 
+# if --clean option is present, remove all version number extensions
+if '--clean' in sys.argv:
+  m = re.search(r'\d+\.\d+\.\d+', version)
+  version = m.string[m.start():m.end()]
+
 # replace in setup.py
 result = []
 replaceNextLine = False
@@ -58,7 +64,6 @@ for line in open('setup.py'):
   if line.strip().startswith('# DO NOT CHANGE'):
     replaceNextLine = True
 open('setup.py', 'w').write(''.join(result))
-
 
 # print version to stdout
 print(version)

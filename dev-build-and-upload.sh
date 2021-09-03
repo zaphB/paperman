@@ -35,7 +35,7 @@ fi
 # extract version info from setup.py and check if successful
 ver="$(cat setup.py | grep 'version\s*=' | grep -oP "'\d+\.\d+\.\d+'" | grep -oP '\d+\.\d+\.\d+')"
 if [[ "$ver" == "" ]]; then
-  echo 'failed to extract version from setup.py, is the current commit tagged as release?'
+  echo "failed to extract current version from setup.py"
   exit 1
 fi
 
@@ -57,7 +57,4 @@ pip install --upgrade pip build twine setuptools \
   && echo '=== building project done' \
   && echo '=======================================' \
   && echo '' \
-  && python -m twine upload dist/* \
-  && minor="$(cat setup.py | grep "version=" | grep -o "\.[0-9][0-9]*[^.0-9]" | grep -o "[0-9][0-9]*")" \
-  && newMinor="$(echo "$minor + 1" | bc)" \
-  && sed -E -i "s/version='([0-9]+\.[0-9]+\.)[0-9]+'/version='\1$newMinor'/g" setup.py
+  && python -m twine upload dist/* 

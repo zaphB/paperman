@@ -12,7 +12,7 @@ try:
   import subprocess
   p = os.path.join(os.path.dirname(__file__), 'dev-update-setup.sh')
   if (os.path.isfile(p) and os.access(p, os.X_OK)):
-    version = subprocess.run([p], capture_output=True).decode().strip()
+    version = subprocess.run([p], capture_output=True).stdout.decode().strip()
 except KeyboardInterrupt:
   raise
 except:

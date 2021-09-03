@@ -22,7 +22,7 @@ def shouldBeProtected(fullString, string, askProtect=True):
     decision = io.conf(f'should the capitalization of ',
                        f'"{string}" in',
                        f'"{fullString}"',
-                       f'be protected  in the bibliography?', default=True)
+                       f'be protected in the bibliography?', default=True)
   if decision:
     if io.conf(f'should protected capitalization of',
                f'"{string}"',
@@ -217,8 +217,10 @@ class Cite:
               orig = v[o+1:c].replace('{', '').replace('}', '')
               expanded = v[_o+1:_c].replace('{', '').replace('}', '')
               askProtect = True
-              if (orig.strip() and orig != expanded
-                      and all([c not in expanded for c in '/:_'])):
+              if ('\\' not in v[:_c+1]
+                      and orig.strip()
+                      and orig != expanded
+                      and all([c not in expanded for c in r'/:_'])):
                 if io.conf(f'detected protected capitalization of a fraction '
                            f'of a word',
                            f'"{v[o+1:c]}" in value',
@@ -237,8 +239,11 @@ class Cite:
                   askProtect = False
 
               # apply/dont apply protection
-              if v[o+1:c].strip():
-                if shouldBeProtected(v, v[o+1:c], askProtect=askProtect):
+              protect = v[o+1:c]
+              if (protect.strip()
+                    and all([c not in protect for c in r'\/:_&'])):
+                if shouldBeProtected(v, v[o+1:c].replace('{', '').replace('}', ''),
+                                     askProtect=askProtect):
                   v = v[:o]+'{'+v[o+1:c]+'}'+v[c+1:]
                 else:
                   v = v[:o]+v[o+1:c]+v[c+1:]
