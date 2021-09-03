@@ -110,6 +110,32 @@ def main():
                      help='search library, check library health, detect '
                           'corrupt bib files, duplicates and possibly '
                           'broken pdfs')
+  s.add_argument('-f', '--find', nargs='+',
+                 help='find library entries that contain given words in '
+                      'bibtex fields')
+  s.add_argument('-F', '--find-fulltext', nargs='+',
+                 help='find library entries that contain given words in '
+                      'full manuscript text (requires pdf2txt program to '
+                      'to be installed on your $PATH)')
+
+  # make-diff subcommand
+  s = sub.add_parser('make-diff',
+                     help='build pdf that shows changes between file versions')
+  s.add_argument('-t' , '--old-is-tag', action='store_true',
+                 help='do not treat "old" argument as filename, '
+                      'but as git tag name (requires git to be installed '
+                      'in your $PATH, requires current directory to be '
+                      'git repository)')
+  s.add_argument('-T' , '--new-is-tag', action='store_true',
+                 help='do not treat "new" argument as filename, '
+                      'but as git tag name (requires git to be installed '
+                      'in your $PATH, requires current directory to be '
+                      'git repository)')
+  s.add_argument('old', help='filename of old version')
+  s.add_argument('new', help='filename of new version')
+  s.add_argument('filename', nargs='?',
+                 help='only used if both --old-is-tag and '
+                      '--new-is-tag are set, specifies filename')
 
   # enable autocompletion and parse args
   argcomplete.autocomplete(p)
@@ -148,6 +174,9 @@ def main():
 
   elif args.command == 'library':
     from .subcommands import library as cmd
+
+  elif args.command == 'make-diff':
+    from .subcommands import make_diff as cmd
 
   else:
     io.dbg(f'{args=}')
