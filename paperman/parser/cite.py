@@ -27,14 +27,14 @@ def shouldBeProtected(fullString, string, askProtect=True):
     if io.conf(f'should protected capitalization of',
                f'"{string}"',
                f'be saved permanently?', default=True):
-      protectedList.append(string.lower())
+      protectedList.append(string)
       cfg.set('z_bib_words_protect_capitalization',
               sorted(list(set(protectedList))))
   else:
     if io.conf(f'should never capitalizing',
                f'"{string}"',
                f'be saved permanently?', default=True):
-      antiProtectedList.append(string.lower())
+      antiProtectedList.append(string)
       cfg.set('z_bib_words_dont_protect_capitalization',
               sorted(list(set(antiProtectedList))))
   return decision
@@ -72,14 +72,14 @@ class Cite:
 
   def __setitem__(self, item, value):
     k, val = self._findFieldKeyValuePair(item)
+    if k is not None:
+      # pop item element
+      self.fields.pop(k)
 
-    # pop item element
-    self.fields.pop(k)
-
-    # pop parse info as well, which is useless after setting a new value
-    if (self.fieldsParseInfo is not None
-            and k in self.fieldsParseInfo):
-      self.fieldsParseInfo.pop(k)
+      # pop parse info as well, which is useless after setting a new value
+      if (self.fieldsParseInfo is not None
+              and k in self.fieldsParseInfo):
+        self.fieldsParseInfo.pop(k)
 
     # set new value
     self.fields[item.lower()] = '{'+str(value)+'}'
@@ -97,12 +97,12 @@ class Cite:
 
     k = keys[lkeys.index(item.lower())]
 
-    # only return if field has expected form
+    # if limited by { and } or ", strip those
     if (self.fields[k]
           and self.fields[k][0] in '{"'
           and self.fields[k][-1] in '}"'):
       return k, self.fields[k][1:-1]
-    return None, None
+    return k, self.fields[k]
 
 
   @utils.cacheReturnValue
@@ -144,7 +144,6 @@ class Cite:
         try:
           self['month'] = int(month)
         except:
-          raise
           months = 'jan feb mar apr may jun jul aug sep oct nov dec'.split()
           for i, m in enumerate(months):
             if month.lower().startswith(m):
@@ -182,8 +181,10 @@ class Cite:
               and k in self.fieldsParseInfo):
           opens, closes = [self.fieldsParseInfo[k][_k]
                                       for _k in ('opens', 'closes')]
-          if (not opens or not closes
-                or len(opens) != len(closes)
+          if not opens and not closes:
+            v = '{'+v+'}'
+
+          elif (len(opens) != len(closes)
                 or opens[0] != 0
                 or closes[-1] != len(v)-1):
             io.warn('unexpected curly brace and quote structure at',
@@ -201,7 +202,7 @@ class Cite:
               if closes[0] <= o:
                 raise RuntimeError('unexpected error')
               if opens and closes[0] >= opens[0]:
-                io.warn('unexpected curly brace and quote structure at',
+                io.warn('curly brace/quote structure is nested too deeply in',
                         f'citation with key "{self.key}" in item "{k}",',
                         'failed to pretty print this citation')
                 break
@@ -209,23 +210,24 @@ class Cite:
 
               # detect if only single letters or fraction of a word are proteced
               _o, _c = o, c
-              while _o > 0 and v[_o-1].isalpha() or v[_o-1] in '-':
+              while _o > 0 and (v[_o].isalpha() or v[_o] in r'\-{}'):
                 _o -= 1
-              while _c+1 < len(v) and v[_c+1].isalpha() or v[_c+1] in '-':
+              while _c < len(v) and (v[_c].isalpha() or v[_c] in r'\-{}'):
                 _c += 1
-              _c = min(_c+1, len(v)-1)
-              orig = v[o+1:c].replace('{', '').replace('}', '').replace('"', '')
-              expanded = v[_o+1:_c].replace('{', '').replace('}', '').replace('"', '')
+              orig = v[o+1:c].replace('{', '').replace('}', '')
+              expanded = v[_o+1:_c].replace('{', '').replace('}', '')
               askProtect = True
-              if orig != expanded:
-                if io.conf(f'detected protected capitalization fractional word',
+              if (orig.strip() and orig != expanded
+                      and all([c not in expanded for c in '/:_'])):
+                if io.conf(f'detected protected capitalization of a fraction '
+                           f'of a word',
                            f'"{v[o+1:c]}" in value',
                            f'"{v}"',
                            f'expand protection to '
                            f'"{expanded}"?', default=True):
                   # update value and open/close positions
-                  v = v[:_o]+'{'+v[_o:o]+v[o+1:c]+v[c+1:_c]+'}'+v[_c:]
-                  o = _o
+                  v = v[:_o+1]+'{'+v[_o+1:o]+v[o+1:c]+v[c+1:_c]+'}'+v[_c:]
+                  o = _o+1
                   c = _c-1
 
                   # remove other openings and closings in word range
@@ -235,12 +237,13 @@ class Cite:
                   askProtect = False
 
               # apply/dont apply protection
-              if shouldBeProtected(v, v[o+1:c], askProtect=askProtect):
-                v = v[:o]+'{'+v[o+1:c]+'}'+v[c+1:]
-              else:
-                v = v[:o]+v[o+1:c]+v[c+1:]
-                opens = [o-2 for o in opens]
-                closes = [c-2 for c in closes]
+              if v[o+1:c].strip():
+                if shouldBeProtected(v, v[o+1:c], askProtect=askProtect):
+                  v = v[:o]+'{'+v[o+1:c]+'}'+v[c+1:]
+                else:
+                  v = v[:o]+v[o+1:c]+v[c+1:]
+                  opens = [o-2 for o in opens]
+                  closes = [c-2 for c in closes]
 
         # check if always protect phrases exist and offer protection
         if cfg.get('bib_repair', 'protect_capitalization_if_unprotected'):

@@ -304,3 +304,22 @@ class BibFile:
             'probably due to unmatched curly braces')
 
     return res
+
+
+  def addCites(self, cites):
+    if cites:
+      open(self.path, 'a').write('\n'+'\n\n'.join([c.pretty() for c in cites])+'\n')
+      self._cites = None
+      self.cites()
+
+
+  def setCites(self, cites):
+    newContent = '\n\n'.join([c.pretty() for c in cites])+'\n'
+    if newContent != self.content:
+      open(self.path, 'w').write(newContent)
+      self._cites = None
+      self.cites()
+
+
+  def rewrite(self):
+    self.setCites(self.cites())

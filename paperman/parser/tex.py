@@ -83,7 +83,7 @@ class TexFile:
       detectedPaths(i.graphicspath(paths=paths, latexlines=latexlines))
 
     # scan self
-    for m in re.finditer(r'.*\\graphicspath\{((\s*\{[^{}]+\}\s*)+)\}.*',
+    for m in re.finditer(r'\\graphicspath\{((\s*\{[^{}]+\}\s*)+)\}',
                          self.content()):
       latexlines.append([self.path, m.string[m.start():m.end()]])
       _p = [m.groups()[0] for m in re.finditer(r'\{([^{}]*)\}',
@@ -107,13 +107,13 @@ class TexFile:
       for file in i.imgs():
         if file not in res:
           res.append(file)
-    for m in re.finditer(r'.*\\includegraphics(\[[^[\]]*\])?\{([^{}]+)\}.*', self.content()):
+    for m in re.finditer(r'\\includegraphics(\[[^[\]]*\])?\{([^{}]+)\}', self.content()):
       file = ImgFile(m.groups()[-1], paths=self.graphicspath())
       if file not in res:
         res.append(file)
         if os.path.sep in file.fname:
           io.warn(f'in file "{self.path}":',
-                  m.string[m.start():m.end()],
+                  '"'+m.string[m.start():m.end()]+'"',
                   r'it is recommended to define image folders in the preample with',
                   r'\graphicspath{} and to use only names in \includegraphics '
                   f'calls, e.g.:',
@@ -138,7 +138,7 @@ class TexFile:
           res.append(b)
 
     # search for biblatex package loading
-    for m in re.finditer(r'.*\\usepackage(\[[^[\]]*\])?{biblatex}.*',
+    for m in re.finditer(r'\\usepackage(\[[^[\]]*\])?{biblatex}',
                          self.content()):
       (self.toplevel or self)._packageIncludes += 1
       options = ''
@@ -146,15 +146,15 @@ class TexFile:
         options = m.groups()[0]
       if not (m := re.search(r'backend\s*=\s*biber', options)):
         io.warn(f'in file "{self.path}":',
-                f'{m.string[m.start():m.end()]}'
+                '"'+m.string[m.start():m.end()]+'"',
                 f'it is recommended to use biblatex with backend=biber option')
 
     # search for deprectaed natbib and warn
-    for m in re.finditer(r'.*\\usepackage(\[[^[\]]*\])?{natbib}.*',
+    for m in re.finditer(r'\\usepackage(\[[^[\]]*\])?{natbib}',
                          self.content()):
       (self.toplevel or self)._packageIncludes += 1
       io.warn(f'in file "{self.path}":',
-              f'{m.string[m.start():m.end()]}',
+              '"'+m.string[m.start():m.end()]+'"',
               f'natbib pacakge is deprecated, it is recommended to use',
               f'the biblatex package with backend=biber instead')
       (self.toplevel or self)._bibHealthy = False
@@ -168,7 +168,6 @@ class TexFile:
     for s in ('addbibresource', 'bibliography'):
       for m in re.finditer(r'.*\\'+s+r'(\[[^[\]]*\])?{([^{}]+)}.*',
                            self.content()):
-        io.dbg(*m.groups())
         file = BibFile(common.pathRelTo(self, m.groups()[-1]))
         if not file.exists():
           io.warn(f'file "{self.path}" included',
@@ -195,7 +194,7 @@ class TexFile:
   def cites(self):
     res = []
     # scan through all commands that look like cite commands
-    for m in re.finditer(r'.*\\[^\[\]{}]*cite[^\[\]{}]*(\[[^[\]]*\])?{([^{}]+)}.*',
+    for m in re.finditer(r'\\[^\[\]{}]*cite[^\[\]{}]*(\[[^[\]]*\])?{([^{}]+)}',
                          self.content()):
       for s in m.groups()[-1].split():
         for _s in s.split(','):

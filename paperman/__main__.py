@@ -31,6 +31,8 @@ def main():
   addTexFileArg(s)
   s.add_argument('-i', '--import', action='store_true',
                  help='try importing missing images from image library')
+  #s.add_argument('-c', '--clean', action='store_true',
+  #               help='remove unused images')
 
   # bib command
   s = sub.add_parser('bib', help='bibliography helper: check if unused bib '
@@ -39,6 +41,14 @@ def main():
   s.add_argument('-i', '--import', action='store_true',
                  help='try importing missing citations from existing '
                       'bibliographies')
+  #s.add_argument('-c', '--clean', action='store_true',
+  #               help='remove unused citations from bibliography, implies '
+  #                    '--rewrite')
+  s.add_argument('-r', '--rewrite', action='store_true',
+                 help='rewrite and repair entire bibliography')
+  s.add_argument('-s', '--sort', nargs='?', default=False,
+                 help='sort bibliography, sort order can be one of "date", '
+                      '"author" or "key", default is "key", implies --rewrite')
 
   # sort authors command
   s = sub.add_parser('sort-authors',
