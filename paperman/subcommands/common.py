@@ -24,8 +24,8 @@ def prettyDirectory(p):
 
 # detect project from either given toplevel path of current directory
 # warn and offer to cancel if too many toplevel files are detected
-def detectProj(args):
-  proj = project.Project(args)
+def detectProj(args, **kwargs):
+  proj = project.Project(args, **kwargs)
 
   if len(proj.toplevel()) > 3:
     if len(proj.toplevel()) > 20:

@@ -10,12 +10,15 @@ from .img import ImgFile
 from .cite import Cite
 
 class TexFile:
-  def __init__(self, path, toplevel=None):
+  def __init__(self, path, toplevel=None, raiseOnIncludeNotFound=None,
+               enableIncludeImport=False):
     if not os.path.exists(path):
       raise RuntimeError(f'file {path} does not exist')
 
     self.path = os.path.normpath(path)
     self.toplevel = toplevel
+    self.raiseOnIncludeNotFound = raiseOnIncludeNotFound
+    self.enableIncludeImport = enableIncludeImport
     self._bibHealthy = None
     self._packageIncludes = None
 
@@ -42,15 +45,43 @@ class TexFile:
                         if not l.strip().startswith('%')])
 
 
+  def recurseThroughIncludes(self):
+    for i in self.includes():
+      i.recurseThroughIncludes()
+
+
   @utils.cacheReturnValue
   def includes(self):
     res = []
+    if re.search(r'\\include(\[[^[\]]*\])?\{([^{}]+)\}', self.content()):
+      io.warn(r'found \include{} command in tex file ',
+              f'"{self.path}"',
+              r'paperman does not support include logic and',
+              r'might oversee missing/unused imgs/citation/includes')
     for m in re.finditer(r'\\input(\[[^[\]]*\])?\{([^{}]+)\}', self.content()):
       fname = m.groups()[-1]
       if not fname.endswith('.tex'):
         fname += '.tex'
-      res.append(TexFile(common.pathRelTo(self, fname),
-                         toplevel=(self.toplevel or self)))
+      includePath = common.pathRelTo(self, fname)
+
+      # if enabled, import missing include file
+      if not os.path.isfile(includePath):
+        if self.enableIncludeImport:
+          from .. import finder
+          if finder.importInclude(includePath):
+            io.info(f'successfully imported {includePath}')
+
+      # check again if file still missing and raise special exception
+      # in case this is set (used by inputs subcommand)
+      if not os.path.isfile(includePath):
+        if self.raiseOnIncludeNotFound:
+          raise self.raiseOnIncludeNotFound(includePath)
+
+      # create TexFile and add to results
+      res.append(TexFile(includePath,
+                         toplevel=(self.toplevel or self),
+                         raiseOnIncludeNotFound=self.raiseOnIncludeNotFound,
+                         enableIncludeImport=self.enableIncludeImport))
     if res:
       io.verb(f'found include files of {self.path}: ',
               *[i.path for i in res])
@@ -171,7 +202,7 @@ class TexFile:
         file = BibFile(common.pathRelTo(self, m.groups()[-1]))
         if not file.exists():
           io.warn(f'file "{self.path}" included',
-                  f'bibliography file "{file.path}"',
+                  f'bibliography file "{file.fname}"',
                   f'which does not seem to exist')
           (self.toplevel or self)._bibHealthy = False
         if file not in res:
@@ -207,4 +238,4 @@ class TexFile:
 
   @utils.cacheReturnValue
   def missingCites(self):
-    return [c for c in self.cites() if not c.exists()]
+    return [c for c in self.cites() if c.isHealthy() and not c.exists()]

@@ -13,10 +13,12 @@ _DEFAULT_CFG = dict(
   debug = False,
   max_directory_depth = 5,
   graphics_extensions = ['jpg', 'jpeg', 'pdf', 'png'],
-  bibtex_extensions = ['bib', 'bibtex'],
   img_dir_name = 'img',
   img_search_paths = [],
   img_search_priority = 'path-order, newest',
+  input_search_paths = [],
+  input_search_priority = 'path-order, newest',
+  bibtex_extensions = ['bib', 'bibtex'],
   bib_search_paths = [],
   bib_search_priority = 'path-order, newest',
   bib_repair = dict(
@@ -29,6 +31,13 @@ _DEFAULT_CFG = dict(
     convert_journal_to_fullname = False,
     protect_capitalization_if_unprotected = True
   ),
+  library_path = '',
+  library_collect_paths = [],
+  library_folder_pattern = '%Y-%m',
+  library_max_filename_len = 60,
+  library_max_filename_segment_len = 60,
+  library_max_key_len = 20,
+  library_max_key_segment_len = 5,
   z_bib_words_protect_capitalization = [],
   z_bib_words_dont_protect_capitalization = []
 )

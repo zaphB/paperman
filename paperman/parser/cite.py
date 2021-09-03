@@ -202,9 +202,9 @@ class Cite:
               if closes[0] <= o:
                 raise RuntimeError('unexpected error')
               if opens and closes[0] >= opens[0]:
-                io.warn('curly brace/quote structure is nested too deeply in',
-                        f'citation with key "{self.key}" in item "{k}",',
-                        'failed to pretty print this citation')
+                #io.warn('curly brace/quote structure is nested too deeply in',
+                #        f'citation with key "{self.key}" in item "{k}",',
+                #        'failed to pretty print this citation')
                 break
               c = closes.pop(0)
 

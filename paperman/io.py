@@ -77,6 +77,10 @@ def err(*msg, logOnly=False):
       print()
 
 
+def formatErr(*msg):
+  return 'error: '+_indentMsg(msg)
+
+
 def warn(*msg, logOnly=False):
   _init()
   msg = _indentMsg(msg)

@@ -1,4 +1,5 @@
 import os
+import re
 
 from .. import cfg
 from .. import io
@@ -11,6 +12,7 @@ from .cite import Cite, FORBIDDEN_KEY_CHARS
 class BibFile:
   def __init__(self, fname):
     self.fname = os.path.normpath(fname)
+    self.path = None
     if self.exists():
       self.path = self.exists()
       self._exists = True
@@ -31,7 +33,9 @@ class BibFile:
 
   @utils.cacheReturnValue
   def content(self):
-    return '\n'.join([l.rstrip('\n') for l in open(self.path, 'r')])
+    if self.path:
+      return '\n'.join([l.rstrip('\n') for l in open(self.path, 'r')])
+    return ''
 
 
   @utils.cacheReturnValue
@@ -323,3 +327,59 @@ class BibFile:
 
   def rewrite(self):
     self.setCites(self.cites())
+
+
+  def create(self):
+    if not self.exists():
+      fname = self.fname
+      open(fname+'.'+cfg.get('bibtex_extensions')[0], 'a')
+      self.__dict__ = {}
+      self.__init__(fname)
+
+
+  def fromRis(key, risFile):
+    entries = dict()
+    entries['authors']=list()
+
+    for line in open(risFile):
+      if re.match("PY",line):
+        entries['year'] = line[6:10]
+      elif re.match("AU",line):
+        entries['authors'].append(line[6:-1])
+      elif re.match("VL",line):
+        entries['volume'] = line[6:-1]
+      elif re.match("TI",line):
+        entries['title'] = line[6:-1]
+      elif re.match("T1",line):
+        entries['title'] = line[6:-1]
+      elif re.match("JA",line):
+        entries['journal'] = line[6:-1]
+      elif re.match("IS",line):
+        entries['number'] = line[6:-1]
+      elif re.match("SP",line):
+        entries['startpage'] = line[6:-1]
+      elif re.match("EP",line):
+        entries['endpage'] = line[6:-1]
+      elif re.match("SN",line):
+        entries['isbn'] = line[6:-1]
+      elif re.match("AB",line):
+        entries['abstract'] = line[6:-1]
+      elif re.match("UR",line):
+        entries['url'] = line[6:-1]
+
+    bibStr = ('@article{' + key + ',\n'
+                  + 'author={' + (" and ".join(entries['authors'])) + '},\n'
+                  + 'year={' + entries['year'] + '},\n'
+                  + 'title={' + entries['title'] + '},\n'
+                  + ('abstract' in entries) * ('abstract = {' + entries.get('abstract', '') + '},\n')
+                  + ('journal' in entries) * ('journal={' + entries.get('journal', '') + '},\n')
+                  + ('volume' in entries) * ('volume={' + entries.get('volume', '') + '},\n')
+                  + ('startpage' in entries and 'endpage' in entries)
+                      * ('pages={' + entries.get('startpage', '')
+                          + "--" + entries.get('endpage', '') + '},\n')
+                  + 'url={'+entries['url']+'},\n'
+                  + '}\n')
+    #io.dbg('converted ris to bib: ', bibStr)
+    res = BibFile('')
+    res._content = bibStr
+    return res

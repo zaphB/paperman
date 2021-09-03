@@ -7,8 +7,9 @@ from . import parser
 
 
 class Project:
-  def __init__(self, args):
+  def __init__(self, args, **kwargs):
     self.args = args
+    self.texFileKwargs = kwargs
     self._warnings = []
 
 
@@ -47,7 +48,7 @@ class Project:
         for f in files:
           if find in ('toplevel', ):
             if f.lower().endswith('.tex'):
-              file = parser.TexFile(os.path.join(root, f))
+              file = parser.TexFile(os.path.join(root, f), **self.texFileKwargs)
               if file.isToplevel():
                 res.append(file)
 
@@ -66,7 +67,7 @@ class Project:
   @utils.cacheReturnValue
   def toplevel(self):
     if hasattr(self.args, 'tex_file') and self.args.tex_file:
-      return [parser.TexFile(self.args.tex_file)]
+      return [parser.TexFile(self.args.tex_file, **self.texFileKwargs)]
     else:
       res = self._walk(find='toplevel')
       if res:
@@ -166,6 +167,6 @@ class Project:
     res = []
     for t in self.toplevel():
       for c in t.missingCites():
-        if c not in res:
+        if c.isHealthy and c not in res:
           res.append(c)
     return res

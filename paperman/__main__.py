@@ -26,18 +26,23 @@ def main():
                         help='toplevel tex file of the document')
 
   # img command
-  s = sub.add_parser('img', help='image helper: check if unused images exist '
-                                 'or import missing images')
+  s = sub.add_parser('img', help='image helper: check if unused or missing '
+                                 'images exist or import missing images')
   addTexFileArg(s)
   s.add_argument('-i', '--import', action='store_true',
-                 help='try importing missing images from image library')
+                 help='try importing missing images from image search path')
   #s.add_argument('-c', '--clean', action='store_true',
   #               help='remove unused images')
 
   # bib command
-  s = sub.add_parser('bib', help='bibliography helper: check if unused bib '
-                                 'entries exist or import missing entries')
+  s = sub.add_parser('bib', help='bibliography helper: check if unused or '
+                                 'missing bib entries exist or import '
+                                 'missing entries')
   addTexFileArg(s)
+  s.add_argument('-p', '--print', action='store_true',
+                 help='try to find missing citations in existing bibliographies '
+                      'and show them in the shell, conflicts with --import, '
+                      '--rewrite, and --sort')
   s.add_argument('-i', '--import', action='store_true',
                  help='try importing missing citations from existing '
                       'bibliographies')
@@ -49,6 +54,19 @@ def main():
   s.add_argument('-s', '--sort', nargs='?', default=False,
                  help='sort bibliography, sort order can be one of "date", '
                       '"author" or "key", default is "key", implies --rewrite')
+
+  # input command
+  s = sub.add_parser('inputs',
+                     help=r'input helper: check if all \input{} files exist '
+                          r'or import files')
+  s.add_argument('-i', '--import', action='store_true',
+                 help=r'try importing missing \input{} files from input '
+                      r'search path')
+
+  # call img, bib and input command with --import flag set
+  s = sub.add_parser('import-all',
+                     help='shortcut to run img, bib and input subcommands '
+                          'with --import option enabled')
 
   # sort authors command
   s = sub.add_parser('sort-authors',
@@ -73,6 +91,26 @@ def main():
                  help='use the separator instead of "and" before the final '
                       'name and ignore ands in input.')
 
+  # collect bib/pdf pairs from specified collect directories
+  s = sub.add_parser('collect',
+                     help='rename and move bib-pdf file pairs from specified '
+                          'folders to library')
+  s.add_argument('paths', nargs='*',
+                 help='specify paths to import bib-pdf file pairs from, '
+                      'defaults to paths given in config')
+  s.add_argument('-w', '--watch', action='store_true',
+                 help='never exit and keep watching the collect directories')
+  s.add_argument('-e', '--err-to-file', action='store_true',
+                 help='write errors not only to stdout, but also to a txt file '
+                      'located in the same position as the bib-pdf file pair '
+                      'that caused the error')
+
+  # library subcommand
+  s = sub.add_parser('library',
+                     help='search library, check library health, detect '
+                          'corrupt bib files, duplicates and possibly '
+                          'broken pdfs')
+
   # enable autocompletion and parse args
   argcomplete.autocomplete(p)
   args = p.parse_args()
@@ -81,14 +119,35 @@ def main():
   io.isVerbose = args.verbose
 
   # select submodule for subcommands
+  cmd, cmds = None, None
   if args.command == 'img':
     from .subcommands import img as cmd
 
   elif args.command == 'bib':
     from .subcommands import bib as cmd
 
+  elif args.command == 'inputs':
+    from .subcommands import inp as cmd
+
+  elif args.command == 'import-all':
+    from .subcommands import inp as cmd1
+    from .subcommands import img as cmd2
+    from .subcommands import bib as cmd3
+    setattr(args, 'import', True)
+    args.clean = False
+    args.rewrite = False
+    args.sort = False
+    args.print = False
+    cmds = [cmd1, cmd2, cmd3]
+
   elif args.command == 'sort-authors':
     from .subcommands import sort_authors as cmd
+
+  elif args.command == 'collect':
+    from .subcommands import collect as cmd
+
+  elif args.command == 'library':
+    from .subcommands import library as cmd
 
   else:
     io.dbg(f'{args=}')
@@ -99,17 +158,20 @@ def main():
   cfg.testIfRequiredExist()
 
   # run subcommand module
-  if cmd:
-    try:
-      cmd.main(args)
-    except KeyboardInterrupt:
+  try:
+    if cmd:
+      cmds = [cmd]
+    if cmds:
+      for cmd in cmds:
+        cmd.main(args)
+  except KeyboardInterrupt:
+    raise
+  except RuntimeError as e:
+    io.err(str(e))
+  except Exception as e:
+    if cfg.get('debug'):
       raise
-    except RuntimeError as e:
-      io.err(str(e))
-    except Exception as e:
-      if cfg.get('debug'):
-        raise
-      io.err(str(e))
+    io.err(str(e))
 
 
 if __name__ == '__main__':

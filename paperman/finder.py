@@ -45,7 +45,7 @@ def importImgs(imgs, imgDir):
     candidates = []
     for i, p in enumerate(searchPaths):
       candidates.extend([(i, c) for c in glob.glob(os.path.join(p, img.fname+'.*'),
-                                                                recursive=True)])
+                                                   recursive=True)])
 
     # in case no candidate was found, add img to failed list and continue
     if not candidates:
@@ -69,7 +69,7 @@ def importCites(cites):
 
   # generate search paths
   searchPaths = []
-  for p in cfg.get('bib_search_paths'):
+  for p in list(cfg.get('bib_search_paths')) + [cfg.get('library_path')+'/**']:
     # expand ~ in path
     p = os.path.expanduser(p)
 
@@ -105,3 +105,33 @@ def importCites(cites):
     success.append(bestMatch)
 
   return success, failed
+
+
+def importInclude(include):
+  success, failed = [], []
+
+  if not os.path.exists(include):
+    # generate search paths
+    searchPaths = [os.path.expanduser(p) for p in cfg.get('input_search_paths')]
+
+    # try to import
+    candidates = []
+    for i, p in enumerate(searchPaths):
+       candidates.extend([(i, c) for c in glob.glob(os.path.join(p, include),
+                                                   recursive=True)])
+
+    # in case no candidate was found, add img to failed list and return
+    if not candidates:
+      failed.append(include)
+      return False
+
+    # generate sorting function according to config
+    rules = cfg.get('input_search_priority').split()
+    _, bestMatch = sorted(candidates, key=_candidateSortKey(rules))[0]
+
+    # copy best match to desired location
+    os.makedirs(os.path.dirname(include) or '.', exist_ok=True)
+    shutil.copy(bestMatch, include)
+    io.dbg(f'copying {bestMatch} -> {include}')
+    return True
+  return False
