@@ -94,7 +94,7 @@ def main(args):
             r = subprocess.run(cmd, capture_output=True)
             if r.returncode:
               io.warn(f'pdf2txt failed with exitcode {r.returncode}:',
-                      r.stdout, r.stderr, f'skipping library entry {path}')
+                      r.stdout.decode(), r.stderr.decode(), f'skipping library entry {path}')
 
           if not os.path.isfile(txtPath):
             io.warn(f'pdf2txt did not create text file',

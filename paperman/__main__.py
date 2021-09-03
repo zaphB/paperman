@@ -131,6 +131,10 @@ def main():
                       'but as git tag name (requires git to be installed '
                       'in your $PATH, requires current directory to be '
                       'git repository)')
+  s.add_argument('-o', '--outfile', nargs='?', default='diff.pdf',
+                 help='name of the pdf file to be built')
+  s.add_argument('-c', '--clean', action='store_true',
+                 help='remove all build files except for output pdf')
   s.add_argument('old', help='filename of old version')
   s.add_argument('new', help='filename of new version')
   s.add_argument('filename', nargs='?',
