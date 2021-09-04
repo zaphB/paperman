@@ -52,9 +52,15 @@ if v := subprocess.run([*'git tag --points-at'.split(),
   if len(versionTags) == 1:
     version = versionTags[0][1:]
 
-# if uncommitted changes exist, add '-mod' to version
-if subprocess.run('git diff-index --quiet HEAD --'.split(),
-                  cwd=cwd).returncode != 0:
+# if uncommitted changes exist in paperman subfolder, add '-mod' to version
+isModified = False
+for line in subprocess.run('git status --porcelain=v1'.split(),
+                           cwd=cwd, capture_output=True).stdout.decode().split('\n'):
+  if line.strip():
+    _, path = line.strip().split()
+    if path.strip().startswith('paperman'):
+      isModified = True
+if isModified:
   version += ('+' if '+' not in version else '')+'mod'
 
 # if --clean option is present, remove all version number extensions
