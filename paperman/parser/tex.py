@@ -123,7 +123,7 @@ class TexFile:
 
     for p in paths:
       if not os.path.isdir(p):
-        io.dbg(f'found graphicspath {p}, which does not exist, ignoring')
+        io.verb(f'found graphicspath {p}, which does not exist, ignoring')
     res = [p for p in paths if os.path.isdir(p)]
     if res:
       io.verb(f'found graphicspaths of {self.path}: '

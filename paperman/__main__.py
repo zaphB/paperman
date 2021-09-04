@@ -13,22 +13,25 @@ def main():
   # show startup message
   io.startup()
 
-  # setup argparser and global arguments
-  p = argparse.ArgumentParser()
-  p.add_argument('-v', '--verbose', action='store_true',
-                 help='print more detailed output')
-
-  sub = p.add_subparsers(metavar='subcommands', dest='command', required=True)
-
   # options used by multiple subparsers
+  def addVerboseArg(parser):
+    parser.add_argument('-v', '--verbose', action='store_true',
+                        help='print more detailed output')
   def addTexFileArg(parser):
     parser.add_argument('tex_file', default='', nargs='?',
                         help='toplevel tex file of the document')
+
+  # setup argparser and global arguments
+  p = argparse.ArgumentParser()
+  addVerboseArg(p)
+
+  sub = p.add_subparsers(metavar='subcommands', dest='command', required=True)
 
   # img command
   s = sub.add_parser('img', help='image helper: check if unused or missing '
                                  'images exist or import missing images')
   addTexFileArg(s)
+  addVerboseArg(s)
   s.add_argument('-i', '--import', action='store_true',
                  help='try importing missing images from image search path')
   #s.add_argument('-c', '--clean', action='store_true',
@@ -39,6 +42,7 @@ def main():
                                  'missing bib entries exist or import '
                                  'missing entries')
   addTexFileArg(s)
+  addVerboseArg(s)
   s.add_argument('-p', '--print', action='store_true',
                  help='try to find missing citations in existing bibliographies '
                       'and show them in the shell, conflicts with --import, '
@@ -59,6 +63,7 @@ def main():
   s = sub.add_parser('inputs',
                      help=r'input helper: check if all \input{} files exist '
                           r'or import files')
+  addVerboseArg(s)
   s.add_argument('-i', '--import', action='store_true',
                  help=r'try importing missing \input{} files from input '
                       r'search path')
@@ -67,11 +72,13 @@ def main():
   s = sub.add_parser('import-all',
                      help='shortcut to run img, bib and input subcommands '
                           'with --import option enabled')
+  addVerboseArg(s)
 
   # sort authors command
   s = sub.add_parser('sort-authors',
                      help='alphabetic sorting and formatting of author lists '
                           'for scientific publications and presentations')
+  addVerboseArg(s)
   s.add_argument('authors', nargs='+',
                  help='comma separated list of authors seperated. Use -s '
                       'option for a different separator')
@@ -95,6 +102,7 @@ def main():
   s = sub.add_parser('collect',
                      help='rename and move bib-pdf file pairs from specified '
                           'folders to library')
+  addVerboseArg(s)
   s.add_argument('paths', nargs='*',
                  help='specify paths to import bib-pdf file pairs from, '
                       'defaults to paths given in config')
@@ -110,6 +118,7 @@ def main():
                      help='search library, check library health, detect '
                           'corrupt bib files, duplicates and possibly '
                           'broken pdfs')
+  addVerboseArg(s)
   s.add_argument('-f', '--find', nargs='+',
                  help='find library entries that contain given words in '
                       'bibtex fields')
@@ -121,6 +130,7 @@ def main():
   # make-diff subcommand
   s = sub.add_parser('make-diff',
                      help='build pdf that shows changes between file versions')
+  addVerboseArg(s)
   s.add_argument('-t' , '--old-is-tag', action='store_true',
                  help='do not treat "old" argument as filename, '
                       'but as git tag name (requires git to be installed '
@@ -191,6 +201,8 @@ def main():
   cfg.testIfRequiredExist()
 
   # run subcommand module
+  cmdStr = str(cmd or '\n'+'\n'.join([str(c) for c in cmds]))
+  io.verb(f'selected subcommand(s): {cmdStr}')
   try:
     if cmd:
       cmds = [cmd]

@@ -35,13 +35,17 @@ def main(args):
   invalidPdfFiles = []
 
   # walk through library
+  hasWarnedDepth = False
   for root, dirs, files in os.walk(libraryPath, topdown=True):
     # abort tree is too deep
-    if root.count(os.sep)-libraryPath.count(os.sep) > cfg.get('max_directory_depth'):
-      io.warn(f'reached max_directory_depth='
-              f'{cfg.get("max_directory_depth")} when recursing '
-              f'library, ignoring deeper levels')
-      break
+    if root.count(os.sep)-libraryPath.count(os.sep)-2 > cfg.get('max_directory_depth'):
+      io.verb(f'skipping subfolders of {root=}')
+      if not hasWarnedDepth:
+        hasWarnedDepth = True
+        io.warn(f'reached max_directory_depth='
+                f'{cfg.get("max_directory_depth")} when recursing '
+                f'library, ignoring deeper levels')
+      dirs = []
 
     # skip git directories
     while i := [d for d in dirs if d.startswith('.git')]:

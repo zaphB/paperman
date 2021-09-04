@@ -32,7 +32,7 @@ def detectProj(args, **kwargs):
       io.info('detected toplevel files: ', *sorted(proj.toplevel())[:20], '...')
     else:
       io.info('detected toplevel files: ', *sorted(proj.toplevel()))
-    if not io.conf('detected more than three toplevel files '
-                  f'({len(proj.toplevel())}), continue?', default=False):
+    if not io.conf(f'detected {len(proj.toplevel())} toplevel files, continue?',
+                   default=False):
       return None
   return proj

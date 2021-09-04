@@ -10,7 +10,6 @@ class Project:
   def __init__(self, args, **kwargs):
     self.args = args
     self.texFileKwargs = kwargs
-    self._warnings = []
 
 
   def _walk(self, find):
@@ -29,16 +28,20 @@ class Project:
             origins.append(p)
 
     # walk through directories
+    hasWarnedDepth = False
     for o in origins:
       for root, dirs, files in os.walk(o, topdown=True):
 
         # abort tree is too deep
-        if root.count(os.sep) > cfg.get('max_directory_depth'):
-          io.warn(f'reached max_directory_depth='
-                  f'{cfg.get("max_directory_depth")} when recursing '
-                  f'through the current directory, ignoring deeper '
-                  f'levels')
-          break
+        if root.count(os.sep)-o.count(os.path.sep)-2 > cfg.get('max_directory_depth'):
+          io.verb(f'skipping subfolders of {root=}')
+          if not hasWarnedDepth:
+            hasWarnedDepth = True
+            io.warn(f'reached max_directory_depth='
+                    f'{cfg.get("max_directory_depth")} when recursing '
+                    f'through the current directory, ignoring deeper '
+                    f'levels')
+          dirs = []
 
         # skip git directories
         while i := [d for d in dirs if d.startswith('.git')]:
@@ -48,6 +51,7 @@ class Project:
         for f in files:
           if find in ('toplevel', ):
             if f.lower().endswith('.tex'):
+              io.verb(f'found tex file {os.path.join(root, f)}')
               file = parser.TexFile(os.path.join(root, f), **self.texFileKwargs)
               if file.isToplevel():
                 res.append(file)
@@ -58,6 +62,7 @@ class Project:
                 # skip pdfs that seem to be builds of tex files
                 and not (f.endswith('.pdf')
                           and os.path.exists(os.path.join(root, f[:-4]+'.tex')))):
+              io.verb(f'found img {os.path.join(root, f)}')
               file = parser.ImgFile(os.path.join(root, f))
               if file not in res:
                 res.append(file)
@@ -114,11 +119,8 @@ class Project:
                           if not f.exists()]
     valid = [f for f in res if not f.containsNewcommandArg()]
     if res != valid:
-      w = (r'found \includegraphcis{} call with #n in argument, cannot '
-           r'check if image exists for such calls')
-      if w not in self._warnings:
-        self._warnings.append(w)
-      io.warn(w)
+      io.warn(r'found \includegraphcis{} call with #n in argument, cannot '
+              r'check if image exists for such calls')
     return sorted(valid)
 
 

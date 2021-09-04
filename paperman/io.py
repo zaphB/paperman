@@ -14,7 +14,6 @@ _IS_INIT             = False
 
 isVerbose            = False
 
-
 def _logger():
   return logging.getLogger('paperman')
 

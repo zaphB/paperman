@@ -58,7 +58,7 @@ def importImgs(imgs, imgDir):
 
     # copy best match to desired location
     shutil.copy(bestMatch, imgDir)
-    io.dbg(f'copying {bestMatch} -> {imgDir}')
+    io.verb(f'copying {bestMatch} -> {imgDir}')
     success.append(img)
 
   return success, failed
@@ -132,6 +132,6 @@ def importInclude(include):
     # copy best match to desired location
     os.makedirs(os.path.dirname(include) or '.', exist_ok=True)
     shutil.copy(bestMatch, include)
-    io.dbg(f'copying {bestMatch} -> {include}')
+    io.verb(f'copying {bestMatch} -> {include}')
     return True
   return False
