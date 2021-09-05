@@ -33,7 +33,7 @@ def shouldBeProtected(fullString, string, askProtect=True):
   else:
     if io.conf(f'should never capitalizing',
                f'"{string}"',
-               f'be saved permanently?', default=True):
+               f'be saved permanently?', default=False):
       antiProtectedList.append(string)
       cfg.set('z_bib_words_dont_protect_capitalization',
               sorted(list(set(antiProtectedList))))
@@ -82,7 +82,14 @@ class Cite:
         self.fieldsParseInfo.pop(k)
 
     # set new value
-    self.fields[item.lower()] = '{'+str(value)+'}'
+    value = str(value)
+    if value[0] != '{' and value[-1] != '}':
+      value = '{'+str(value)+'}'
+    io.dbg(f'setting new field self.fields[{item.lower()}] = {repr(value)}',
+           f'self.fieldsParseInfo[{item.lower()}] = {dict(opens=[0], closes=[len(value)-1])}')
+    self.fields[item.lower()] = value
+    self.fieldsParseInfo[item.lower()] = {'opens': [0],
+                                          'closes': [len(value)-1]}
 
 
   # return item from self.items with case insensitive matching
@@ -98,11 +105,11 @@ class Cite:
     k = keys[lkeys.index(item.lower())]
 
     # if limited by { and } or ", strip those
-    if (self.fields[k]
-          and self.fields[k][0] in '{"'
-          and self.fields[k][-1] in '}"'):
-      return k, self.fields[k][1:-1]
-    return k, self.fields[k]
+    f = self.fields[k]
+    p = self.fieldsParseInfo.get(k, {})
+    if p and p['opens'] and p['closes']:
+      return k, f[p['opens'][0]+1:p['closes'][-1]]
+    return k, f
 
 
   @utils.cacheReturnValue
@@ -122,7 +129,16 @@ class Cite:
     return False
 
 
-  @utils.cacheReturnValue
+  def toString(self):
+    fieldsStr = ''
+    for k, v in self.fields.items():
+      fieldsStr += f'  {k} = {v},\n'
+    # strip trailing comma+newline and wrap properly
+    if fieldsStr:
+      fieldsStr = f',\n{fieldsStr[:-2]}\n'
+    return f'@{self.section}{{{self.key}'+fieldsStr+'}'
+
+
   def pretty(self):
     fieldsStr = ''
     if self.fields is not None:
@@ -155,21 +171,28 @@ class Cite:
 
       # check if config for journal conversion is consistent
       if (cfg.get('bib_repair', 'convert_journal_to_iso4_abbr')
-            and cfg.get('bib_repair', 'convert_journal_to_fullname')):
+            and cfg.get('bib_repair', 'convert_journal_to_full_name')):
         raise RuntimeError('invalid "bib_repair" config: both',
                            '"convert_journal_to_iso4_abbr" and',
-                           '"convert_journal_to_fullname" are enabled')
+                           '"convert_journal_to_full_name" are enabled')
 
-      # replace url field if doi field exists
-      if (cfg.get('bib_repair', 'convert_journal_to_iso4_abbr')
-                and (journal := self['journal']) is not None):
-        raise RuntimeError('not implemented')
-
-      # replace url field if doi field exists
-      if (cfg.get('bib_repair', 'convert_journal_to_fullname')
-                and (journal := self['journal']) is not None):
-        raise RuntimeError('not implemented')
-
+      # search for journal in library and ask to add it if not existing
+      # replace journal field with library value
+      if ((cfg.get('bib_repair', 'convert_journal_to_iso4_abbr')
+             or cfg.get('bib_repair', 'convert_journal_to_full_name'))
+                and (jour:= self['journal']) is not None):
+        from ..parser import journal
+        abbr, name = journal.getOrAsk(jour, self.toString())
+        if cfg.get('bib_repair', 'convert_journal_to_iso4_abbr'):
+          res = abbr
+        else:
+          res = name
+        if res != jour:
+          io.verb('replaced journal field',
+                  repr(jour),
+                  'with',
+                  repr(res))
+        self['journal'] = res
 
       for k, v in self.fields.items():
         # skip ignore fields
@@ -182,11 +205,13 @@ class Cite:
           opens, closes = [self.fieldsParseInfo[k][_k]
                                       for _k in ('opens', 'closes')]
           if not opens and not closes:
-            v = '{'+v+'}'
+            if v[0] != '{' and v[-1] != '}':
+              v = '{'+v+'}'
 
           elif (len(opens) != len(closes)
                 or opens[0] != 0
                 or closes[-1] != len(v)-1):
+            io.dbg(f'{v=}', f'{opens=}', f'{closes=}')
             io.warn('unexpected curly brace and quote structure at',
                     f'citation with key "{self.key}" in item "{k}",',
                     'failed to pretty print this citation')
@@ -264,10 +289,13 @@ class Cite:
 
         if cfg.get('bib_repair', 'make_all_items_lowercase'):
           k = k.lower()
+
         fieldsStr += f'  {k} = {v},\n'
 
       # strip trailing comma+newline and wrap properly
       if fieldsStr:
         fieldsStr = f',\n{fieldsStr[:-2]}\n'
 
-    return (f'@{self.section}{{{self.key}'+fieldsStr+'}')
+    res = f'@{self.section}{{{self.key}'+fieldsStr+'}'
+    io.dbg('pretty printed citation:', res)
+    return res

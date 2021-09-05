@@ -28,7 +28,7 @@ _DEFAULT_CFG = dict(
     force_double_hyphen_in_pages = True,
     convert_month_to_number = True,
     convert_journal_to_iso4_abbr = True,
-    convert_journal_to_fullname = False,
+    convert_journal_to_full_name = False,
     protect_capitalization_if_unprotected = True
   ),
   library_path = '',
@@ -39,7 +39,8 @@ _DEFAULT_CFG = dict(
   library_max_key_len = 20,
   library_max_key_segment_len = 5,
   z_bib_words_protect_capitalization = [],
-  z_bib_words_dont_protect_capitalization = []
+  z_bib_words_dont_protect_capitalization = [],
+  z_bib_journals = {}
 )
 
 _REQUIRED_CFG = dict()

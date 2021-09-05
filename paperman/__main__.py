@@ -151,6 +151,24 @@ def main():
                  help='only used if both --old-is-tag and '
                       '--new-is-tag are set, specifies filename')
 
+  # make-diff subcommand
+  s = sub.add_parser('journal',
+                     help='find full journal names and abbreviations')
+  addVerboseArg(s)
+  s.add_argument('-f', '--full', action='store_true',
+                 help='print full names of found journals')
+  s.add_argument('-a', '--abbreviated', action='store_true',
+                 help='print abbreviated names of found journals ')
+  s.add_argument('--list-suspicious', action='store_true',
+                 help='print all journals in database that might by errornous, '
+                      'i.e., abbreviations that do not end with a dot')
+  s.add_argument('name', nargs='*',
+                 help='journal name, abbreviation or partial name')
+
+  s = sub.add_parser('lint',
+                     help='search latex project for potential errors')
+  addTexFileArg(s)
+
   # enable autocompletion and parse args
   argcomplete.autocomplete(p)
   args = p.parse_args()
@@ -191,6 +209,12 @@ def main():
 
   elif args.command == 'make-diff':
     from .subcommands import make_diff as cmd
+
+  elif args.command == 'journal':
+    from .subcommands import journal as cmd
+
+  elif args.command == 'lint':
+    from .subcommands import lint as cmd
 
   else:
     io.dbg(f'{args=}')

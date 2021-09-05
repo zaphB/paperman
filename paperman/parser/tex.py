@@ -45,6 +45,12 @@ class TexFile:
                         if not l.strip().startswith('%')])
 
 
+  @utils.cacheReturnValue
+  def enumContent(self):
+    return [(i+1, l.rstrip('\n')) for i, l in enumerate(open(self.path, 'r'))
+                                          if not l.strip().startswith('%')]
+
+
   def recurseThroughIncludes(self):
     for i in self.includes():
       i.recurseThroughIncludes()
@@ -239,3 +245,26 @@ class TexFile:
   @utils.cacheReturnValue
   def missingCites(self):
     return [c for c in self.cites() if c.isHealthy() and not c.exists()]
+
+
+  @utils.cacheReturnValue
+  def lint(self):
+    for i in self.includes():
+      yield i.lint()
+
+    for ln, l in self.enumContent():
+      i = -1
+      lastOpening = None
+      opening = True
+      while (i := l.find('$', i+1)) >= 0:
+        if opening:
+          lastOpening = i
+          opening = False
+        else:
+          extr = l[lastOpening:i+1]
+          opening = True
+          if re.search(r'\$[^{].*\s.*[^}]\$', extr):
+            yield (self.path, ln,
+                   f'"{extr}"\n'
+                   'math should be wrapped in curly braces to avoid\n'
+                   'line breaks: not $a = b$ but ${a = b}$')

@@ -172,3 +172,10 @@ class Project:
         if c.isHealthy and c not in res:
           res.append(c)
     return res
+
+
+  @utils.cacheReturnValue
+  def lint(self):
+    for t in self.toplevel():
+      for l in t.lint():
+        yield l
