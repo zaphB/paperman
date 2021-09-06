@@ -127,9 +127,9 @@ def main():
                       'full manuscript text (requires pdf2txt program to '
                       'to be installed on your $PATH)')
 
-  # make-diff subcommand
-  s = sub.add_parser('make-diff',
-                     help='build pdf that shows changes between file versions')
+  # diff subcommand
+  s = sub.add_parser('diff',
+                     help='build pdfs that show changes between file versions')
   addVerboseArg(s)
   s.add_argument('-t' , '--old-is-tag', action='store_true',
                  help='do not treat "old" argument as filename, '
@@ -207,8 +207,8 @@ def main():
   elif args.command == 'library':
     from .subcommands import library as cmd
 
-  elif args.command == 'make-diff':
-    from .subcommands import make_diff as cmd
+  elif args.command == 'diff':
+    from .subcommands import diff as cmd
 
   elif args.command == 'journal':
     from .subcommands import journal as cmd

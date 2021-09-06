@@ -4,7 +4,7 @@ from setuptools import setup
 from setuptools.command.install import install
 
 # DO NOT CHANGE: this line will be replaced by dev-update-setup.py
-version = '0.4.0'
+version = '0.4.0+mod'
 
 # if setup is run in project dir, update version number
 try:
@@ -34,6 +34,7 @@ with open(path.join(path.dirname(__file__), 'README.md'),
 # run setup
 setup(name='paperman',
       description='latex project and bibliography management utility',
+      python_requires='>=3.6',
       long_description=description,
       long_description_content_type='text/markdown',
       author='zaphB',

@@ -19,9 +19,10 @@ def shouldBeProtected(fullString, string, askProtect=True):
     return True
   decision = True
   if askProtect:
-    decision = io.conf(f'should the capitalization of ',
-                       f'"{string}" in',
+    decision = io.conf(f'in bib line',
                        f'"{fullString}"',
+                       f'should the capitalization of ',
+                       f'"{string}"',
                        f'be protected in the bibliography?', default=True)
   if decision:
     if io.conf(f'should protected capitalization of',
@@ -247,11 +248,9 @@ class Cite:
                       and orig != expanded
                       and all([c not in expanded for c in r'/:_'])):
                 if io.conf(f'detected protected capitalization of a fraction '
-                           f'of a word',
-                           f'"{v[o+1:c]}" in value',
+                           f'of a word in',
                            f'"{v}"',
-                           f'expand protection to '
-                           f'"{expanded}"?', default=True):
+                           f'expand "{v[o+1:c]}" -> "{expanded}"?', default=True):
                   # update value and open/close positions
                   v = v[:_o+1]+'{'+v[_o+1:o]+v[o+1:c]+v[c+1:_c]+'}'+v[_c:]
                   o = _o+1

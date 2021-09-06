@@ -152,7 +152,7 @@ def main(args):
   if os.path.exists(target):
     shutil.move(os.path.join(buildDir, 'paperman-diff.pdf'), args.outfile)
     for f in os.listdir(buildDir):
-      if f.startswith('paperman-diff'):
+      if f.startswith('paperman-diff') or f.startswith('.paperman'):
         fname = os.path.join(buildDir, f)
         os.remove(fname)
         io.verb(f'removed {fname}')
