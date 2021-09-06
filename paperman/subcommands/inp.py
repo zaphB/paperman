@@ -13,9 +13,10 @@ def main(args):
       return
 
   try:
-    if (proj := detectProj(args,
-                           enableIncludeImport=enableImport,
-                           raiseOnIncludeNotFound=IncludeMissing)) is None:
+    proj = detectProj(args,
+                      enableIncludeImport=enableImport,
+                      raiseOnIncludeNotFound=IncludeMissing)
+    if proj is None:
       return
     for t in proj.toplevel():
       t.recurseThroughIncludes()

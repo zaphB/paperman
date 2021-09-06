@@ -144,20 +144,24 @@ class Cite:
     fieldsStr = ''
     if self.fields is not None:
       # replace url field if doi field exists
+      doi = self['doi']
       if (cfg.get('bib_repair', 'generate_url_from_doi')
-                and (doi := self['doi']) is not None):
+                and doi is not None):
         self['doi'] = doi
         self['url'] = f'https://doi.org/{doi}'
 
       # reformat pages field if exists
+      pages = self['pages']
       if (cfg.get('bib_repair', 'force_double_hyphen_in_pages')
-                and (pages := self['pages']) is not None):
-        if m := re.match(r'(\d+)[-\s]+(\d+)', pages):
+                and pages is not None):
+        m = re.match(r'(\d+)[-\s]+(\d+)', pages)
+        if m:
           self['pages'] = m.groups()[0]+'--'+m.groups()[1]
 
       # replace url field if doi field exists
+      month = self['month']
       if (cfg.get('bib_repair', 'convert_month_to_number')
-                and (month := self['month']) is not None):
+                and month is not None):
         try:
           self['month'] = int(month)
         except:
@@ -179,9 +183,10 @@ class Cite:
 
       # search for journal in library and ask to add it if not existing
       # replace journal field with library value
+      jour = self['journal']
       if ((cfg.get('bib_repair', 'convert_journal_to_iso4_abbr')
              or cfg.get('bib_repair', 'convert_journal_to_full_name'))
-                and (jour:= self['journal']) is not None):
+                and jour is not None):
         from ..parser import journal
         abbr, name = journal.getOrAsk(jour, self.toString())
         if cfg.get('bib_repair', 'convert_journal_to_iso4_abbr'):
@@ -212,7 +217,7 @@ class Cite:
           elif (len(opens) != len(closes)
                 or opens[0] != 0
                 or closes[-1] != len(v)-1):
-            io.dbg(f'{v=}', f'{opens=}', f'{closes=}')
+            io.dbg(f'v={v}', f'opens={opens}', f'closes={closes}')
             io.warn('unexpected curly brace and quote structure at',
                     f'citation with key "{self.key}" in item "{k}",',
                     'failed to pretty print this citation')
@@ -279,7 +284,10 @@ class Cite:
           for protect in cfg.get('z_bib_words_protect_capitalization'):
             protect = protect.strip()
             i = -1
-            while (i := v.find(protect, i+1)) >= 0:
+            while True:
+              i = v.find(protect, i+1)
+              if i < 0:
+                break
               if ((i-1 < 0
                       or v[i-1] in ' ')
                   and (i+len(protect) > len(v)-2

@@ -217,7 +217,7 @@ def main():
     from .subcommands import lint as cmd
 
   else:
-    io.dbg(f'{args=}')
+    io.dbg(f'args={args}')
     raise ValueError(f'args.command has unexpected value')
 
 

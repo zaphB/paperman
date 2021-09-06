@@ -182,7 +182,8 @@ class TexFile:
       options = ''
       if len(m.groups()):
         options = m.groups()[0]
-      if not (m := re.search(r'backend\s*=\s*biber', options)):
+      m = re.search(r'backend\s*=\s*biber', options)
+      if not m:
         io.warn(f'in file "{self.path}":',
                 '"'+m.string[m.start():m.end()]+'"',
                 f'it is recommended to use biblatex with backend=biber option')
@@ -258,7 +259,10 @@ class TexFile:
       i = -1
       lastOpening = None
       opening = True
-      while (i := l.find('$', i+1)) >= 0:
+      while True:
+        i = l.find('$', i+1)
+        if i < 0:
+          break
         if opening:
           lastOpening = i
           opening = False

@@ -1,7 +1,8 @@
 from .common import *
 
 def main(args):
-  if (proj := detectProj(args)) is None:
+  proj = detectProj(args)
+  if proj is None:
     return
 
   allFine = True

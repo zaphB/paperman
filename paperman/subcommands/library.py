@@ -39,7 +39,7 @@ def main(args):
   for root, dirs, files in os.walk(libraryPath, topdown=True):
     # abort tree is too deep
     if root.count(os.sep)-libraryPath.count(os.sep)-2 > cfg.get('max_directory_depth'):
-      io.verb(f'skipping subfolders of {root=}')
+      io.verb(f'skipping subfolders of {root}')
       if not hasWarnedDepth:
         hasWarnedDepth = True
         io.warn(f'reached max_directory_depth='
@@ -48,7 +48,10 @@ def main(args):
       dirs = []
 
     # skip git directories
-    while i := [d for d in dirs if d.startswith('.git')]:
+    while True:
+      i = [d for d in dirs if d.startswith('.git')]
+      if not i:
+        break
       dirs.remove(i[0])
 
     for f in files:

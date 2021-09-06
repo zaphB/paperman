@@ -34,7 +34,7 @@ class Project:
 
         # abort tree is too deep
         if root.count(os.sep)-o.count(os.path.sep)-2 > cfg.get('max_directory_depth'):
-          io.verb(f'skipping subfolders of {root=}')
+          io.verb(f'skipping subfolders of {root}')
           if not hasWarnedDepth:
             hasWarnedDepth = True
             io.warn(f'reached max_directory_depth='
@@ -44,7 +44,10 @@ class Project:
           dirs = []
 
         # skip git directories
-        while i := [d for d in dirs if d.startswith('.git')]:
+        while True:
+          i = [d for d in dirs if d.startswith('.git')]
+          if not i:
+            break
           dirs.remove(i[0])
 
         # find and open tex files to detect toplevel

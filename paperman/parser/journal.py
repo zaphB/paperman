@@ -90,8 +90,10 @@ def getOrAsk(jour=None, descr=None):
 
   while True:
     io.info('please enter full name of the journal:')
-    while not (full := input().strip()):
-      pass
+    while True:
+      full = input().strip()
+      if full:
+        break
 
     addToDb = True
     k, v = byName(full)
@@ -102,8 +104,10 @@ def getOrAsk(jour=None, descr=None):
       full = v
     else:
       io.info('please enter ISO4 abbreviated name of the journal:')
-      while not (abbr := input().strip()):
-        pass
+      while True:
+        abbr = input().strip()
+        if abbr:
+          break
 
     if io.conf(f'the correct full name for the journal',
                repr(jour),

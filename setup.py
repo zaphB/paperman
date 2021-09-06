@@ -4,7 +4,7 @@ from setuptools import setup
 from setuptools.command.install import install
 
 # DO NOT CHANGE: this line will be replaced by dev-update-setup.py
-version = '0.4.0'
+version = '0.5.0'
 
 # if setup is run in project dir, update version number
 try:

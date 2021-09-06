@@ -25,8 +25,9 @@ versionTags = (['v0.0.0']
 
 # try to read current version from setup.py and add to versionTags list
 # if it is newer than latest tagged version
-if m := re.search(r"version\s*=\s*['\"](\d+)\.(\d+)\.(\d+)+?.*['\"]",
-                  open('setup.py').read()):
+m = re.search(r"version\s*=\s*['\"](\d+)\.(\d+)\.(\d+)+?.*['\"]",
+              open('setup.py').read())
+if m:
   ep, major, minor = [int(i) for i in m.groups()]
   _ep, _major, _minor = [int(i) for i in versionTags[-1][1:].split('.')]
   if (ep>_ep
@@ -41,12 +42,13 @@ commitHash = subprocess.run('git rev-parse --short HEAD'.split(),
 version = f'{versionTags[-1][1:]}+H{commitHash}'
 
 # if current commit is tagged as release, set release version
-if v := subprocess.run([*'git tag --points-at'.split(),
-                        subprocess.run('git branch --show-current'.split(),
-                                       capture_output=True,
-                                       cwd=cwd).stdout.strip()],
-                        capture_output=True,
-                        cwd=cwd).stdout.decode():
+v = subprocess.run([*'git tag --points-at'.split(),
+                   subprocess.run('git branch --show-current'.split(),
+                                  capture_output=True,
+                                  cwd=cwd).stdout.strip()],
+                   capture_output=True,
+                   cwd=cwd).stdout.decode()
+if v:
   versionTags = list(filter(lambda t: re.match(r'v\d+\.\d+\.\d+', t),
                             v.split()))
   if len(versionTags) == 1:
