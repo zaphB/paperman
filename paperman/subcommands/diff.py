@@ -22,14 +22,22 @@ def main(args):
     buildDir = os.path.dirname(args.new)
   buildDir = buildDir or '.'
 
+  # if clean option is set, just clean and return
   if args.clean:
     for f in os.listdir(buildDir):
-      if (f.startswith('paperman-diff')
-            or f.startswith('.paperman')):
+      if f.startswith('paperman-diff'):
         fname = os.path.join(buildDir, f)
         os.remove(fname)
         io.verb(f'removing {fname}')
     return
+
+  # check if build files exist and warn about
+  # overwriting them
+  if any([f.startswith('paperman-diff') for f in os.listdir(buildDir)]):
+    if not io.conf(f'filenames beginning with "paperman-diff" exist',
+                   f'in "{(buildDir or ".")+os.path.sep}" and may be overwritten',
+                   f'during diff build, continue?', default=True):
+      return
 
   # function to copy file versions
   def copyToBuildDir(path, name, buildDir=buildDir):
@@ -79,9 +87,9 @@ def main(args):
       path = args.fname
     else:
       path = args.new
-    gitShowToBuildDir(args.old, path, '.paperman-old')
+    gitShowToBuildDir(args.old, path, 'paperman-diff-old')
   else:
-    copyToBuildDir(args.old, '.paperman-old')
+    copyToBuildDir(args.old, 'paperman-diff-old')
 
   # prepare new files
   if args.new_is_tag:
@@ -89,9 +97,9 @@ def main(args):
       path = args.fname
     else:
       path = args.old
-    gitShowToBuildDir(args.new, path, '.paperman-new')
+    gitShowToBuildDir(args.new, path, 'paperman-diff-new')
   else:
-    copyToBuildDir(args.new, '.paperman-new')
+    copyToBuildDir(args.new, 'paperman-diff-new')
 
   # run command and raise on error
   def run(*cmd, stdout=None, raiseOnErr=True):
@@ -120,8 +128,8 @@ def main(args):
   #                [None, 'trying to build without bib-diff...']):
     io.info(msg)
     for e in ('tex', 'bbl'):
-      bblOld = os.path.join(buildDir, '.paperman-old.bbl')
-      bblNew = os.path.join(buildDir, '.paperman-new.bbl')
+      bblOld = os.path.join(buildDir, 'paperman-diff-old.bbl')
+      bblNew = os.path.join(buildDir, 'paperman-diff-new.bbl')
       if (e == 'bbl'
             and (not os.path.exists(bblOld)
                or not os.path.exists(bblNew)
@@ -138,7 +146,7 @@ def main(args):
         continue
 
       run('latexdiff', *(['-t', 'FLOATSAFE'] if e=='tex' and fs else []),
-          '.paperman-old.'+e, '.paperman-new.'+e,
+          'paperman-diff-old.'+e, 'paperman-diff-new.'+e,
           stdout=open(os.path.join(buildDir, 'paperman-diff.'+e), 'w'))
 
     for _ in range(2):
@@ -152,7 +160,7 @@ def main(args):
   if os.path.exists(target):
     shutil.move(os.path.join(buildDir, 'paperman-diff.pdf'), args.outfile)
     for f in os.listdir(buildDir):
-      if f.startswith('paperman-diff') or f.startswith('.paperman'):
+      if f.startswith('paperman-diff'):
         fname = os.path.join(buildDir, f)
         os.remove(fname)
         io.verb(f'removed {fname}')
