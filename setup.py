@@ -46,7 +46,7 @@ setup(name='paperman',
         ],
         'gui_scripts': []
       },
-      install_requires=['appdirs', 'argparse', 'argcomplete'],
+      install_requires=['appdirs', 'argparse', 'argcomplete', 'pyyaml'],
       cmdclass={
         'install': PostInstall
       }

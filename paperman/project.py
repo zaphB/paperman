@@ -41,7 +41,7 @@ class Project:
                     f'{cfg.get("max_directory_depth")} when recursing '
                     f'through the current directory, ignoring deeper '
                     f'levels')
-          dirs = []
+          dirs.clear()
 
         # skip git directories
         while True:

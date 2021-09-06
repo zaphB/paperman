@@ -1,6 +1,6 @@
 import shutil
-import glob
 import os
+import fnmatch
 
 from . import io
 from . import cfg
@@ -24,6 +24,48 @@ def _candidateSortKey(rules):
   return key
 
 
+def _fastGlob(path):
+  res = []
+  basePath = path.split('*')[0]
+  hasWarnedDepth = False
+  for root, dirs, files in os.walk(basePath, topdown=True):
+    # abort tree is too deep
+    if root.count(os.sep)-basePath.count(os.path.sep)-2 > cfg.get('max_directory_depth'):
+      io.verb(f'skipping subfolders of {root}')
+      if not hasWarnedDepth:
+        hasWarnedDepth = True
+        io.warn(f'reached max_directory_depth='
+                f'{cfg.get("max_directory_depth")} when recursing '
+                f'through the current directory, ignoring deeper '
+                f'levels')
+      dirs.clear()
+
+    # do not recurse into links
+    while True:
+      i = [d for d in dirs if os.path.islink(d)]
+      if not i:
+        break
+      io.dbg(f'skipped link {i[0]}')
+      dirs.remove(i[0])
+
+
+    # skip hidden directories (e.g. git)
+    while True:
+      i = [d for d in dirs if d.startswith('.')]
+      if not i:
+        break
+      #io.dbg(f'skipped {i[0]}')
+      dirs.remove(i[0])
+
+    # check if any file matches
+    for f in files:
+      fname = os.path.join(root, f)
+      #io.dbg(f'{fname}, {path}')
+      if fnmatch.fnmatch(fname, path):
+        res.append(fname)
+  return res
+
+
 def importImgs(imgs, imgDir):
   success, failed = [], []
 
@@ -44,8 +86,7 @@ def importImgs(imgs, imgDir):
   for img in imgs:
     candidates = []
     for i, p in enumerate(searchPaths):
-      candidates.extend([(i, c) for c in glob.glob(os.path.join(p, img.fname+'.*'),
-                                                   recursive=True)])
+      candidates.extend([(i, c) for c in _fastGlob(os.path.join(p, img.fname+'.*'))])
 
     # in case no candidate was found, add img to failed list and continue
     if not candidates:
@@ -69,27 +110,33 @@ def importCites(cites):
 
   # generate search paths
   searchPaths = []
-  for p in list(cfg.get('bib_search_paths')) + [cfg.get('library_path')+'/**']:
+  for p in (list(cfg.get('bib_search_paths'))
+            + [cfg.get('library_path')+'/**'] if cfg.get('library_path') else []):
     # expand ~ in path
     p = os.path.expanduser(p)
 
     # append unedited path
     searchPaths.append(p)
 
+  # create huge list with all found bib paths
+  allCites = []
+  for i, p in enumerate(searchPaths):
+    for ext in cfg.get('bibtex_extensions'):
+      for f in _fastGlob(os.path.join(p, '*.'+ext)):
+        try:
+          _cites = parser.BibFile(f).cites()
+        except RuntimeError as e:
+          io.warn('error parsing bibtex file on search path:',
+                  str(e),
+                  'skipping...')
+        else:
+          for c in _cites:
+            if c not in [c for _, _, c in allCites]:
+              allCites.append([i, f, c])
+
   # iterate through requested images and try to import
   for cite in cites:
-    candidates = []
-    for i, p in enumerate(searchPaths):
-      for ext in cfg.get('bibtex_extensions'):
-        for f in glob.glob(os.path.join(p, '*.'+ext), recursive=True):
-          try:
-            _cites = parser.BibFile(f).cites()
-          except RuntimeError as e:
-            io.warn('error parsing bibtex file on search path:',
-                    str(e),
-                    'skipping...')
-          else:
-            candidates.extend([(i, f, c) for c in _cites if c == cite])
+    candidates = [(i, f, c) for i, f, c in allCites if c == cite]
 
     # in case no candidate was found, add cite to failed list and continue
     if not candidates:
@@ -117,8 +164,7 @@ def importInclude(include):
     # try to import
     candidates = []
     for i, p in enumerate(searchPaths):
-       candidates.extend([(i, c) for c in glob.glob(os.path.join(p, include),
-                                                   recursive=True)])
+       candidates.extend([(i, c) for c in _fastGlob(os.path.join(p, include))])
 
     # in case no candidate was found, add img to failed list and return
     if not candidates:

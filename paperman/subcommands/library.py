@@ -45,7 +45,7 @@ def main(args):
         io.warn(f'reached max_directory_depth='
                 f'{cfg.get("max_directory_depth")} when recursing '
                 f'library, ignoring deeper levels')
-      dirs = []
+      dirs.clear()
 
     # skip git directories
     while True:

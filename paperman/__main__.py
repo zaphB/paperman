@@ -25,7 +25,7 @@ def main():
   p = argparse.ArgumentParser()
   addVerboseArg(p)
 
-  sub = p.add_subparsers(metavar='subcommands', dest='command', required=True)
+  sub = p.add_subparsers(metavar='subcommands', dest='command')
 
   # img command
   s = sub.add_parser('img', help='image helper: check if unused or missing '
