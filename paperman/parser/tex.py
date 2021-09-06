@@ -2,6 +2,7 @@ import re
 import os
 
 from .. import io
+from .. import cfg
 from .. import utils
 from . import common
 
@@ -253,6 +254,7 @@ class TexFile:
       yield i.lint()
 
     for ln, l in self.enumContent():
+      # search for dollars without line break protection
       i = -1
       lastOpening = None
       opening = True
@@ -268,3 +270,20 @@ class TexFile:
                    f'"{extr}"\n'
                    'math should be wrapped in curly braces to avoid\n'
                    'line breaks: not $a = b$ but ${a = b}$')
+
+      # find commands that should not used or not be used in toplevel files
+      avoidCommands = list(cfg.get('lint', 'avoid_commands'))
+      if self.isToplevel():
+        avoidCommands += list(cfg.get('lint', 'avoid_commands_in_toplevel'))
+      for cmd in avoidCommands:
+        cmd = cmd.strip(r'\ {}')
+        if len(cmd) == 1:
+          io.warn(f'command {cmd} in avoid_commands list is only one '
+                   'character long')
+        if re.search('\\\\'+cmd, l):
+          bs = '\\'
+          yield (self.path, ln,
+                 f'found latex command {bs}{cmd}, which is on avoid-list')
+
+      # spellcheck
+      # TODO

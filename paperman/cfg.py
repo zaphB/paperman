@@ -31,6 +31,11 @@ _DEFAULT_CFG = dict(
     convert_journal_to_full_name = False,
     protect_capitalization_if_unprotected = True
   ),
+  lint=dict(
+    avoid_commands_in_toplevel=[],
+    avoid_commands = [],
+#    check_spelling=[]
+  ),
   library_path = '',
   library_collect_paths = [],
   library_folder_pattern = '%Y-%m',
