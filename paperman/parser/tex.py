@@ -10,6 +10,7 @@ from .bib import BibFile
 from .img import ImgFile
 from .cite import Cite
 
+
 class TexFile:
   def __init__(self, path, toplevel=None, raiseOnIncludeNotFound=None,
                enableIncludeImport=False):
@@ -60,12 +61,12 @@ class TexFile:
   @utils.cacheReturnValue
   def includes(self):
     res = []
-    if re.search(r'\\include(\[[^[\]]*\])?\{([^{}]+)\}', self.content()):
+    if re.search(r'\\include\s*(\[[^[\]]*\])?\s*\{([^{}]+)\}', self.content()):
       io.warn(r'found \include{} command in tex file ',
               f'"{self.path}"',
               r'paperman does not support include logic and',
               r'might oversee missing/unused imgs/citation/includes')
-    for m in re.finditer(r'\\input(\[[^[\]]*\])?\{([^{}]+)\}', self.content()):
+    for m in re.finditer(r'\\input\s*(\[[^[\]]*\])?\s*\{([^{}]+)\}', self.content()):
       fname = m.groups()[-1]
       if not fname.endswith('.tex'):
         fname += '.tex'
@@ -121,11 +122,11 @@ class TexFile:
       detectedPaths(i.graphicspath(paths=paths, latexlines=latexlines))
 
     # scan self
-    for m in re.finditer(r'\\graphicspath\{((\s*\{[^{}]+\}\s*)+)\}',
+    for m in re.finditer(r'\\graphicspath\s*\{((\s*\{[^{}]+\}\s*)+)\}',
                          self.content()):
       latexlines.append([self.path, m.string[m.start():m.end()]])
       _p = [m.groups()[0] for m in re.finditer(r'\{([^{}]*)\}',
-                                                  re.sub(r'\s+', '', m.groups()[0]))]
+                                               re.sub(r'\s+', '', m.groups()[0]))]
       detectedPaths([common.pathRelTo(self, p) for p in _p])
 
     for p in paths:
@@ -145,7 +146,8 @@ class TexFile:
       for file in i.imgs():
         if file not in res:
           res.append(file)
-    for m in re.finditer(r'\\includegraphics(\[[^[\]]*\])?\{([^{}]+)\}', self.content()):
+    for m in re.finditer(r'\\includegraphics\s*(\[[^[\]]*\])?\s*\{([^{}]+)\}',
+                         self.content()):
       file = ImgFile(m.groups()[-1], paths=self.graphicspath())
       if file not in res:
         res.append(file)
@@ -176,7 +178,7 @@ class TexFile:
           res.append(b)
 
     # search for biblatex package loading
-    for m in re.finditer(r'\\usepackage(\[[^[\]]*\])?{biblatex}',
+    for m in re.finditer(r'\\usepackage\s*(\[[^[\]]*\])?\s*{biblatex}',
                          self.content()):
       (self.toplevel or self)._packageIncludes += 1
       options = ''
@@ -189,7 +191,7 @@ class TexFile:
                 f'it is recommended to use biblatex with backend=biber option')
 
     # search for deprectaed natbib and warn
-    for m in re.finditer(r'\\usepackage(\[[^[\]]*\])?{natbib}',
+    for m in re.finditer(r'\\usepackage\s*(\[[^[\]]*\])?\s*{natbib}',
                          self.content()):
       (self.toplevel or self)._packageIncludes += 1
       io.warn(f'in file "{self.path}":',
@@ -205,7 +207,7 @@ class TexFile:
 
     # search for bibliography and addbibresource commands
     for s in ('addbibresource', 'bibliography'):
-      for m in re.finditer(r'.*\\'+s+r'(\[[^[\]]*\])?{([^{}]+)}.*',
+      for m in re.finditer(r'.*\\'+s+r'\s*(\[[^[\]]*\])?\s*{([^{}]+)}.*',
                            self.content()):
         file = BibFile(common.pathRelTo(self, m.groups()[-1]))
         if not file.exists():
@@ -233,7 +235,7 @@ class TexFile:
   def cites(self):
     res = []
     # scan through all commands that look like cite commands
-    for m in re.finditer(r'\\[^\[\]{}]*cite[^\[\]{}]*(\[[^[\]]*\])?{([^{}]+)}',
+    for m in re.finditer(r'\\[^\[\]{}]*cite\s*[^\[\]{}]*\s*(\[[^[\]]*\])?{([^{}]+)}',
                          self.content()):
       for s in m.groups()[-1].split():
         for _s in s.split(','):
