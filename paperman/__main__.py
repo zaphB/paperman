@@ -178,7 +178,11 @@ def main():
 
   # select submodule for subcommands
   cmd, cmds = None, None
-  if args.command == 'img':
+  if not args.command:
+    io.err('subcommand is required')
+    return
+
+  elif args.command == 'img':
     from .subcommands import img as cmd
 
   elif args.command == 'bib':
