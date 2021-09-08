@@ -30,4 +30,4 @@ def main(args):
               str(e))
 
   else:
-    io.info(r'all \inputs{} exist')
+    io.info(r'all files imported by \input{} exist')

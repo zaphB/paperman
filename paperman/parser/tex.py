@@ -79,7 +79,7 @@ class TexFile:
             io.info(f'successfully imported {includePath}')
 
       # check again if file still missing and raise special exception
-      # in case this is set (used by inputs subcommand)
+      # in case this is set (used by input subcommand)
       if not os.path.isfile(includePath):
         if self.raiseOnIncludeNotFound:
           raise self.raiseOnIncludeNotFound(includePath)

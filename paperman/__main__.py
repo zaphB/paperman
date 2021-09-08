@@ -60,7 +60,7 @@ def main():
                       '"author" or "key", default is "key", implies --rewrite')
 
   # input command
-  s = sub.add_parser('inputs',
+  s = sub.add_parser('input',
                      help=r'input helper: check if all \input{} files exist '
                           r'or import files')
   addVerboseArg(s)
@@ -184,7 +184,7 @@ def main():
   elif args.command == 'bib':
     from .subcommands import bib as cmd
 
-  elif args.command == 'inputs':
+  elif args.command == 'input':
     from .subcommands import inp as cmd
 
   elif args.command == 'import-all':
