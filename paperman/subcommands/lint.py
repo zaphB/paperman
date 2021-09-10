@@ -6,7 +6,9 @@ def main(args):
     return
 
   allFine = True
-  for f, ln, msg in proj.lint():
+  for l in proj.lint():
+    #io.dbg(f'proj.lint yielded {l}')
+    f, ln, msg = l
     io.info(f'in file {f}, line {ln}:', msg)
     allFine = False
 

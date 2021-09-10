@@ -179,6 +179,7 @@ class Project:
 
   @utils.cacheReturnValue
   def lint(self):
+    visited = []
     for t in self.toplevel():
-      for l in t.lint():
+      for l in t.lint(visited=visited):
         yield l

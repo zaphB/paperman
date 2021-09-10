@@ -90,10 +90,10 @@ class BibFile:
         raiseErr(f'duplicate item "{currentItem}"')
       res[-1].fields[currentItem] = currentValue.strip()
       res[-1].fieldsParseInfo[currentItem] = currentValueParseInfo
-      io.dbg(f'created new field for citation {res[-1].key}',
-             f'item: {currentItem}, value: {currentValue}',
-             f'parseInfo: {currentValueParseInfo}',
-             f'in {self.path}:{currentLine}')
+      #io.dbg(f'created new field for citation {res[-1].key}',
+      #       f'item: {currentItem}, value: {currentValue}',
+      #       f'parseInfo: {currentValueParseInfo}',
+      #       f'in {self.path}:{currentLine}')
       currentValue = None
       currentValueParseInfo = None
       currentItem = None
@@ -106,8 +106,8 @@ class BibFile:
         _assert(currentSection is None)
         currentSection = ''
         state = 'section'
-        io.dbg(f'found start of new bib section',
-               f'in {self.path}:{currentLine}')
+        #io.dbg(f'found start of new bib section',
+        #       f'in {self.path}:{currentLine}')
 
       # skip all characters outside of sections
       elif state == 'comment':
@@ -145,9 +145,9 @@ class BibFile:
         res.append(Cite(currentKey,
                         bibs=[self],
                         section=currentSection))
-        io.dbg(f'created new citation entry with key {currentKey}',
-               f'and type {currentSection}',
-               f'in {self.path}:{currentLine}')
+        #io.dbg(f'created new citation entry with key {currentKey}',
+        #       f'and type {currentSection}',
+        #       f'in {self.path}:{currentLine}')
         currentKey = None
         currentSection = None
 
@@ -163,9 +163,9 @@ class BibFile:
         res.append(Cite(currentKey,
                         bibs=[self],
                         section=currentSection))
-        io.dbg(f'created new empty citation entry with key {currentKey}',
-               f'and type {currentSection}',
-               f'in {self.path}:{currentLine}')
+        #io.dbg(f'created new empty citation entry with key {currentKey}',
+        #       f'and type {currentSection}',
+        #       f'in {self.path}:{currentLine}')
         currentKey = None
         currentSection = None
         state = 'comment'

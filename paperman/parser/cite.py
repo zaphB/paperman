@@ -113,6 +113,21 @@ class Cite:
     return k, f
 
 
+  def insertNonexistingItems(self, cite):
+    lkeys = [k.lower() for k in self.fields.keys()]
+    for k, v in cite.fields.items():
+      if k not in lkeys:
+        parseInfo = {}
+        if k in v.fieldsParseInfo:
+          parseInfo = v.fieldsParseInfo[k]
+        _k = k
+        if cfg.get('bib_repair', 'make_all_items_lowercase'):
+          _k = k.lower()
+        io.dbg(f'inserted field {_v}={v[:10]}{"" if len(v)<10 else "..."} into citation')
+        self.fields[_k] = v
+        self.fieldsParseInfo[_k] = parseInfo
+
+
   @utils.cacheReturnValue
   def isHealthy(self):
     # list of forbidden characters in bibtex keys found here:
@@ -152,7 +167,12 @@ class Cite:
 
       # reformat pages field if exists
       pages = self['pages']
-      if (cfg.get('bib_repair', 'force_double_hyphen_in_pages')
+      if (cfg.get('bib_repair', 'keep_only_startpage_in_pages')
+                and pages is not None):
+        m = re.match(r'^(\d+)', pages)
+        if m:
+          self['pages'] = m.groups()[0]
+      elif (cfg.get('bib_repair', 'force_double_hyphen_in_pages')
                 and pages is not None):
         m = re.match(r'(\d+)[-\s]+(\d+)', pages)
         if m:

@@ -252,9 +252,12 @@ class TexFile:
 
 
   @utils.cacheReturnValue
-  def lint(self):
+  def lint(self, visited=[]):
     for i in self.includes():
-      yield i.lint()
+      if i not in visited:
+        for l in i.lint(visited=visited):
+          yield l
+        visited.append(i)
 
     for ln, l in self.enumContent():
       # search for dollars without line break protection
@@ -293,3 +296,5 @@ class TexFile:
 
       # spellcheck
       # TODO
+
+    visited.append(self)

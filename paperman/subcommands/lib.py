@@ -1,5 +1,6 @@
 import subprocess
 
+from .. import utils
 from .. import parser
 from . common import *
 
@@ -131,7 +132,20 @@ def main(args):
     if not matches:
       io.info('no matches')
     for m in matches:
-      io.info(m)
+      bibPath = None
+      for ext in cfg.get('bibtex_extensions'):
+        _bibPath = utils.replaceSuffix(m, ext)
+        if os.path.exists(_bibPath):
+          bibPath = _bibPath
+          break
+      if args.long:
+        if bibPath:
+          io.raw(parser.BibFile(bibPath).cites()[0].toString())
+      elif args.key:
+        if bibPath:
+          io.info(parser.BibFile(bibPath).cites()[0].key)
+      else:
+        io.info(m)
 
   if scan:
     foundDuplicates = {k: v for k, v in foundDuplicates.items()

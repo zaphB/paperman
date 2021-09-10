@@ -37,3 +37,10 @@ def cacheReturnValue(func):
       setattr(self, cacheAttr, func(self, *args, **kwargs))
     return getattr(self, cacheAttr)
   return wrapper
+
+
+def replaceSuffix(path, suff):
+  fname = os.path.basename(path)
+  if '.' in fname:
+    fname = '.'.join(fname.split('.')[:-1])
+  return os.path.join(os.path.dirname(path), fname+'.'+suff)

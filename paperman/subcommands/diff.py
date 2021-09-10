@@ -1,13 +1,8 @@
 import shutil
 import subprocess
 
+from .. import utils
 from .common import *
-
-def replaceSuffix(path, suff):
-  fname = os.path.basename(path)
-  if '.' in fname:
-    fname = '.'.join(fname.split('.')[:-1])
-  return os.path.join(os.path.dirname(path), fname+'.'+suff)
 
 
 def main(args):
@@ -41,12 +36,12 @@ def main(args):
 
   # function to copy file versions
   def copyToBuildDir(path, name, buildDir=buildDir):
-    texSrc = replaceSuffix(path, 'tex')
+    texSrc = utils.replaceSuffix(path, 'tex')
     texTar = os.path.join(buildDir, name+'.tex')
     shutil.copy(texSrc, texTar)
     io.verb(f'copied {texSrc} -> {texTar}')
 
-    bblSrc = replaceSuffix(path, 'bbl')
+    bblSrc = utils.replaceSuffix(path, 'bbl')
     bblTar = os.path.join(buildDir, name+'.bbl')
     if os.path.exists(bblSrc):
       shutil.copy(bblSrc, bblTar)
@@ -57,7 +52,7 @@ def main(args):
 
   # function to extract tagged file versions
   def gitShowToBuildDir(tag, path, name):
-    texPath = replaceSuffix(path, 'tex')
+    texPath = utils.replaceSuffix(path, 'tex')
     r = subprocess.run(['git', 'show', tag+':./'+texPath],
                        capture_output=True)
     if r.returncode:
@@ -67,7 +62,7 @@ def main(args):
     open(texTar, 'w').write(r.stdout.decode())
     io.verb(f'wrote result of "git show {tag}:./{texPath}" to {texTar}')
 
-    bblPath = replaceSuffix(path, 'bbl')
+    bblPath = utils.replaceSuffix(path, 'bbl')
     bblTar = os.path.join(buildDir, name+'.bbl')
     r = subprocess.run(['git', 'show', tag+':./'+bblPath], capture_output=True)
     if r.returncode:

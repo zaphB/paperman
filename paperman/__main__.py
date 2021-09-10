@@ -114,7 +114,7 @@ def main():
                       'that caused the error')
 
   # library subcommand
-  s = sub.add_parser('library',
+  s = sub.add_parser('lib',
                      help='search library, check library health, detect '
                           'corrupt bib files, duplicates and possibly '
                           'broken pdfs')
@@ -126,6 +126,12 @@ def main():
                  help='find library entries that contain given words in '
                       'full manuscript text (requires pdf2txt program to '
                       'to be installed on your $PATH)')
+  s.add_argument('-k', '--key', action='store_true',
+                 help='print citation key instead of path')
+  s.add_argument('-l', '--long', action='store_true',
+                 help='print full bibtex entries instead of path only')
+  #s.add_argument('-L', '--extra-long', action='store_true',
+  #               help='print full pdf2txt result instead of path only')
 
   # diff subcommand
   s = sub.add_parser('diff',
@@ -167,6 +173,7 @@ def main():
 
   s = sub.add_parser('lint',
                      help='search latex project for potential errors')
+  addVerboseArg(s)
   addTexFileArg(s)
 
   # enable autocompletion and parse args
@@ -208,8 +215,8 @@ def main():
   elif args.command == 'collect':
     from .subcommands import collect as cmd
 
-  elif args.command == 'library':
-    from .subcommands import library as cmd
+  elif args.command == 'lib':
+    from .subcommands import lib as cmd
 
   elif args.command == 'diff':
     from .subcommands import diff as cmd

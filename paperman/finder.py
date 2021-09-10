@@ -95,7 +95,9 @@ def importImgs(imgs, imgDir):
 
     # generate sorting function according to config
     rules = cfg.get('img_search_priority').split()
-    _, bestMatch = sorted(candidates, key=_candidateSortKey(rules))[0]
+    sortedCandidates = sorted(candidates, key=_candidateSortKey(rules))
+    io.dbg(f'first ten matching candidates sorted by {rules}:', sortedCandidates[:10])
+    _, bestMatch = sortedCandidates[0]
 
     # copy best match to desired location
     shutil.copy(bestMatch, imgDir)
@@ -145,10 +147,19 @@ def importCites(cites):
 
     # generate sorting function according to config
     rules = cfg.get('bib_search_priority').split()
-    _, _path, bestMatch = sorted(candidates, key=_candidateSortKey(rules))[0]
+    sortedCandidates = sorted(candidates, key=_candidateSortKey(rules))
+    io.dbg(f'first ten matching candidates sorted by {rules}:', sortedCandidates[:10])
+    _, _path, bestMatch = sortedCandidates[0]
     io.verb(f'best match for citation with key "{cite.key}"',
             f'found in file',
             f'{_path}')
+
+    if cfg.get('bib_repair', 'merge_all_found_info'):
+      if len(sortedCandidates) > 1:
+        io.verb('merging with info from all other candidates...')
+      for c in sortedCandidates[1:]:
+        bestMatch[-1].insertNonexistingItems(c[-1])
+
     success.append(bestMatch)
 
   return success, failed
@@ -173,7 +184,9 @@ def importInclude(include):
 
     # generate sorting function according to config
     rules = cfg.get('input_search_priority').split()
-    _, bestMatch = sorted(candidates, key=_candidateSortKey(rules))[0]
+    sortedCandidates = sorted(candidates, key=_candidateSortKey(rules))
+    io.dbg(f'first ten matching candidates sorted by {rules}:', sortedCandidates[:10])
+    _, bestMatch = sortedCandidates[0]
 
     # copy best match to desired location
     os.makedirs(os.path.dirname(include) or '.', exist_ok=True)
