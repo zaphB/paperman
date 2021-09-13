@@ -33,7 +33,7 @@ if ! git diff-index --quiet HEAD --; then
 fi
 
 # extract version info from setup.py and check if successful
-ver="$(cat setup.py | grep 'version\s*=' | grep -oP "'\d+\.\d+\.\d+'" | grep -oP '\d+\.\d+\.\d+')"
+ver="$(./dev/update-setup.sh --clean)"
 if [[ "$ver" == "" ]]; then
   echo "failed to extract current version from setup.py"
   exit 1
