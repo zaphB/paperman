@@ -5,7 +5,7 @@ import re
 import sys
 from os import path
 
-cwd = path.dirname(__file__)
+cwd = path.join(path.dirname(__file__), '..')
 
 # run git update-index to find uncommitted changes
 if subprocess.run('git update-index --refresh'.split(),

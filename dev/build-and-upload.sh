@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # change dir to this script's location
-cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")"
+cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
 
 # check if repo is clean or need commit
 git update-index --refresh >/dev/null 2>&1
@@ -57,4 +57,4 @@ pip install --upgrade pip build twine setuptools \
   && echo '=== building project done' \
   && echo '=======================================' \
   && echo '' \
-  && python -m twine upload dist/* 
+  && python -m twine upload dist/*

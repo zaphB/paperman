@@ -3,14 +3,14 @@
 from setuptools import setup
 from setuptools.command.install import install
 
-# DO NOT CHANGE: this line will be replaced by dev-update-setup.py
-version = '0.6.0'
+# DO NOT CHANGE: this line will be replaced by ./dev/update-setup.py
+version = '0.6.0+Hb4cd0a0'
 
 # if setup is run in project dir, update version number
 try:
   import os
   import subprocess
-  p = os.path.join(os.path.dirname(__file__), 'dev-update-setup.sh')
+  p = os.path.join(os.path.dirname(__file__), 'dev/update-setup.sh')
   if (os.path.isfile(p) and os.access(p, os.X_OK)):
     version = subprocess.run([p], capture_output=True).stdout.decode().strip()
 except KeyboardInterrupt:
