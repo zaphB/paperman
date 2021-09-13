@@ -290,7 +290,7 @@ class Cite:
               # apply/dont apply protection
               protect = v[o+1:c]
               if (protect.strip()
-                    and all([c not in protect for c in r'\/:_&'])):
+                    and all([_c not in v[:c] for _c in r'\/:_&'])):
                 if shouldBeProtected(v, v[o+1:c].replace('{', '').replace('}', ''),
                                      askProtect=askProtect):
                   v = v[:o]+'{'+v[o+1:c]+'}'+v[c+1:]

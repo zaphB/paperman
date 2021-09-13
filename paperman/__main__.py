@@ -24,6 +24,8 @@ def main():
   # setup argparser and global arguments
   p = argparse.ArgumentParser()
   addVerboseArg(p)
+  p.add_argument('--version', action='store_true',
+                 help='print installed paperman version')
 
   sub = p.add_subparsers(metavar='subcommands', dest='command')
 
@@ -182,6 +184,11 @@ def main():
 
   # apply verbosity setting
   io.isVerbose = args.verbose
+
+  # if version is requested, print version and exit
+  if args.version:
+    io.info(f'paperman version {io.__version__}')
+    return
 
   # select submodule for subcommands
   cmd, cmds = None, None

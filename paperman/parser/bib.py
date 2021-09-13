@@ -79,7 +79,7 @@ class BibFile:
       currentItem = currentItem.strip()
       _assert(currentItem,
               'found empty item name')
-      _assert(currentItem.isalpha(),
+      _assert(all([(c.isalpha() or c in '-_') for c in currentItem]),
               'found invalid item name')
       _assert(len(res))
       if res[-1].fields is None:
@@ -207,7 +207,8 @@ class BibFile:
       elif state == 'item':
         _assert(currentItem is not None)
         _assert(currentItem.strip() == ''
-                    or currentItem.strip().isalpha(),
+                  or all([(c.strip().isalpha()
+                            for c in '-_' for c) in currentItem]),
                 'found invalid item name')
         currentItem += c
 
