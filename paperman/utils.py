@@ -40,7 +40,10 @@ def cacheReturnValue(func):
 
 
 def replaceSuffix(path, suff):
+  suff = suff.strip()
   fname = os.path.basename(path)
   if '.' in fname:
     fname = '.'.join(fname.split('.')[:-1])
-  return os.path.join(os.path.dirname(path), fname+'.'+suff)
+  if len(suff)>0 and not suff.startswith('.'):
+    suff = '.'+suff
+  return os.path.join(os.path.dirname(path), fname+suff)

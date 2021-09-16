@@ -23,9 +23,9 @@ class BibFile:
     d = os.path.dirname(self.fname) or '.'
     if not os.path.isdir(d):
       return False
-    for ext in ['']+['.'+(e[1:] if e.startswith('.') else e)
-                              for e in cfg.get('bibtex_extensions')]:
-      candidate = os.path.join(d, os.path.basename(self.fname)+ext)
+    for ext in ['']+list(cfg.get('bibtex_extensions')):
+      candidate = utils.replaceSuffix(self.fname, ext)
+      #io.dbg(f'trying candidate {candidate}')
       if os.path.isfile(candidate):
         return candidate
     return False
@@ -80,7 +80,7 @@ class BibFile:
       _assert(currentItem,
               'found empty item name')
       _assert(all([(c.isalpha() or c in '-_') for c in currentItem]),
-              'found invalid item name')
+              f'found invalid item name "{currentItem.strip()}"')
       _assert(len(res))
       if res[-1].fields is None:
         res[-1].fields = {}
@@ -207,9 +207,10 @@ class BibFile:
       elif state == 'item':
         _assert(currentItem is not None)
         _assert(currentItem.strip() == ''
-                  or all([(c.strip().isalpha()
-                            for c in '-_' for c) in currentItem]),
-                'found invalid item name')
+                  or all([(c.isalpha()
+                              or c.strip() == ''
+                              or c in '-_') for c in currentItem]),
+                f'found invalid item name starting with "{currentItem.strip()}"')
         currentItem += c
 
       # nice summary of how {, } and " delimiters are parsed by bibtex:
@@ -342,7 +343,7 @@ class BibFile:
   def create(self):
     if not self.exists():
       fname = self.fname
-      open(fname+'.'+cfg.get('bibtex_extensions')[0], 'a')
+      open(utils.replaceSuffix(fname, cfg.get('bibtex_extensions')[0]), 'a')
       self.__dict__ = {}
       self.__init__(fname)
 

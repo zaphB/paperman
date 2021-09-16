@@ -20,7 +20,6 @@ def main(args):
     except KeyboardInterrupt:
       raise
     except:
-      raise
       io.err(f'"pdf2txt -h" failed but is required',
              'for fulltext search, is pdf2txt correctly',
              'installed on your path?')

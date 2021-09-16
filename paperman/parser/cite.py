@@ -137,10 +137,12 @@ class Cite:
 
   @utils.cacheReturnValue
   def exists(self):
+    #io.dbg(f'self.exists: {self.key=}, {[b.path for b in self.bibs]=}')
     if self.bibs is None:
       return None
     for b in self.bibs:
       if self in b.cites():
+        #io.dbg(f'exsists in {b.path}')
         return True
     return False
 

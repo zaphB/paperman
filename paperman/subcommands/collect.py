@@ -112,8 +112,8 @@ def main(args):
 
         elif len(pdfs) or len(bibs):
           onError(os.path.join(p, 'derp'),
-                  f'found {len(pdfs)} pdf candidates and {len(bibs)}',
-                  f'bib candidates in ', p,
+                  f'found {len(pdfs)} pdf candidates and {len(bibs)} bib',
+                  f'candidates in ', p,
                   f'need to have exactly one of each to collect')
 
       # if watch option is not set run mainloop only once
