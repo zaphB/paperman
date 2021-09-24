@@ -39,7 +39,7 @@ commitHash = subprocess.run('git rev-parse --short HEAD'.split(),
                             capture_output=True,
                             cwd=cwd).stdout.decode().strip()
 
-version = f'{versionTags[-1][1:]}+H{commitHash}'
+version = f'{versionTags[-1][1:]}+h{commitHash}'
 
 # if current commit is tagged as release, set release version
 v = subprocess.run([*'git tag --points-at'.split(),
