@@ -81,6 +81,10 @@ def _writeCfg():
             open(_CFG_PATH, 'w'))
 
 
+def path():
+  return os.path.abspath(_CFG_PATH)
+
+
 def reload():
   global _IS_CFG_LOADED
   try:

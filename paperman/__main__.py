@@ -178,6 +178,12 @@ def main():
   addVerboseArg(s)
   addTexFileArg(s)
 
+  s = sub.add_parser('config',
+                     help='print location of config file and exit')
+  s.add_argument('-o', '--open', action='store_true',
+                 help='open config file in vim')
+  addVerboseArg(s)
+
   # enable autocompletion and parse args
   argcomplete.autocomplete(p)
   args = p.parse_args()
@@ -233,6 +239,9 @@ def main():
 
   elif args.command == 'lint':
     from .subcommands import lint as cmd
+
+  elif args.command == 'config':
+    from .subcommands import config as cmd
 
   else:
     io.dbg(f'args={args}')
