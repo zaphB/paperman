@@ -59,7 +59,8 @@ def main(args):
       raise RuntimeError('failed to get tex file via "git show":\n'
                          +r.stdout.decode()+'\n'+r.stderr.decode())
     texTar = os.path.join(buildDir, name+'.tex')
-    open(texTar, 'w').write(r.stdout.decode())
+    with open(texTar, 'w') as f:
+      f.write(r.stdout.decode())
     io.verb(f'wrote result of "git show {tag}:./{texPath}" to {texTar}')
 
     bblPath = utils.replaceSuffix(path, 'bbl')
@@ -73,7 +74,8 @@ def main(args):
         io.verb(f'removed {bblTar}')
     else:
       bblTar = os.path.join(buildDir, name+'.bbl')
-      open(bblTar, 'w').write(r.stdout.decode())
+      with open(bblTar, 'w') as f:
+        f.write(r.stdout.decode())
       io.verb(f'wrote result of "git show {tag}:./{bblPath}" to {bblTar}')
 
   # prepare old files
@@ -140,9 +142,9 @@ def main(args):
 
         continue
 
-      run('latexdiff', *(['-t', 'FLOATSAFE'] if e=='tex' and fs else []),
-          'paperman-diff-old.'+e, 'paperman-diff-new.'+e,
-          stdout=open(os.path.join(buildDir, 'paperman-diff.'+e), 'w'))
+      with open(os.path.join(buildDir, 'paperman-diff.'+e), 'w') as f:
+        run('latexdiff', *(['-t', 'FLOATSAFE'] if e=='tex' and fs else []),
+            'paperman-diff-old.'+e, 'paperman-diff-new.'+e, stdout=f)
 
     for _ in range(2):
       res = run('pdflatex', '-interaction=nonstopmode', 'paperman-diff',

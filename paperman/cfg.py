@@ -61,14 +61,16 @@ _HAS_TESTED_REQUIRED_KEYS = False
 def _touchCfg():
   os.makedirs(os.path.dirname(_CFG_PATH), exist_ok=True)
   if not os.path.exists(_CFG_PATH):
-    open(_CFG_PATH, 'w')
+    with open(_CFG_PATH, 'w') as f:
+      pass
 
 
 def _loadCfg():
   global _IS_CFG_LOADED, _CFG, _HAS_TESTED_REQUIRED_KEYS
   if not _IS_CFG_LOADED:
     _touchCfg()
-    _CFG = yaml.safe_load(open(_CFG_PATH, 'r')) or {}
+    with open(_CFG_PATH, 'r') as f:
+      _CFG = yaml.safe_load(f) or {}
     _IS_CFG_LOADED = True
     _HAS_TESTED_REQUIRED_KEYS = False
     testIfRequiredExist()
@@ -77,8 +79,8 @@ def _loadCfg():
 
 def _writeCfg():
   _touchCfg()
-  yaml.dump({k: v for k, v in {**_DEFAULT_CFG, **_CFG}.items()},
-            open(_CFG_PATH, 'w'))
+  with open(_CFG_PATH, 'w') as f:
+    yaml.dump({k: v for k, v in {**_DEFAULT_CFG, **_CFG}.items()}, f)
 
 
 def path():

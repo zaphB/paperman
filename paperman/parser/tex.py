@@ -43,14 +43,16 @@ class TexFile:
 
   @utils.cacheReturnValue
   def content(self):
-    return '\n'.join([l.rstrip('\n') for l in open(self.path, 'r')
-                        if not l.strip().startswith('%')])
+    with open(self.path, 'r') as f:
+      return '\n'.join([l.rstrip('\n') for l in f
+                                if not l.strip().startswith('%')])
 
 
   @utils.cacheReturnValue
   def enumContent(self):
-    return [(i+1, l.rstrip('\n')) for i, l in enumerate(open(self.path, 'r'))
-                                          if not l.strip().startswith('%')]
+    with open(self.path, 'r') as f:
+      return [(i+1, l.rstrip('\n')) for i, l in enumerate(f)
+                                  if not l.strip().startswith('%')]
 
 
   def recurseThroughIncludes(self):

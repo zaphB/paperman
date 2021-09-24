@@ -107,15 +107,17 @@ def main(args):
             io.warn(f'pdf2txt did not create text file',
                     f'skipping library entry {path}')
           else:
-            txt = open(txtPath, 'r').read()
+            with open(txtPath, 'r') as f:
+              txt = f.read()
             if all([s.lower() in txt.lower() for s in fulltextSearch]):
               matches.append(path)
 
         # if scan is enabled, check if file looks valid
         if scan:
           try:
-            if not open(path, 'rb').read(16).startswith(b'%PDF'):
-              raise ValueError('not pdf')
+            with open(path, 'rb') as f:
+              if not f.read(16).startswith(b'%PDF'):
+                raise ValueError('not pdf')
           except KeyboardInterrupt:
             raise
           except:

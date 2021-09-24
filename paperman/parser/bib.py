@@ -34,7 +34,8 @@ class BibFile:
   @utils.cacheReturnValue
   def content(self):
     if self.path:
-      return '\n'.join([l.rstrip('\n') for l in open(self.path, 'r')])
+      with open(self.path, 'r') as f:
+        return '\n'.join([l.rstrip('\n') for l in f])
     return ''
 
 
@@ -323,7 +324,8 @@ class BibFile:
 
   def addCites(self, cites):
     if cites:
-      open(self.path, 'a').write('\n'+'\n\n'.join([c.pretty() for c in cites])+'\n')
+      with open(self.path, 'a') as f:
+        f.write('\n'+'\n\n'.join([c.pretty() for c in cites])+'\n')
       self._cites = None
       self.cites()
 
@@ -331,7 +333,8 @@ class BibFile:
   def setCites(self, cites):
     newContent = '\n\n'.join([c.pretty() for c in cites])+'\n'
     if newContent != self.content:
-      open(self.path, 'w').write(newContent)
+      with open(self.path, 'w') as f:
+        f.write(newContent)
       self._cites = None
       self.cites()
 
@@ -343,7 +346,8 @@ class BibFile:
   def create(self):
     if not self.exists():
       fname = self.fname
-      open(utils.replaceSuffix(fname, cfg.get('bibtex_extensions')[0]), 'a')
+      with open(utils.replaceSuffix(fname, cfg.get('bibtex_extensions')[0]), 'a') as f:
+        pass
       self.__dict__ = {}
       self.__init__(fname)
 
@@ -352,31 +356,32 @@ class BibFile:
     entries = dict()
     entries['authors']=list()
 
-    for line in open(risFile):
-      if re.match("PY",line):
-        entries['year'] = line[6:10]
-      elif re.match("AU",line):
-        entries['authors'].append(line[6:-1])
-      elif re.match("VL",line):
-        entries['volume'] = line[6:-1]
-      elif re.match("TI",line):
-        entries['title'] = line[6:-1]
-      elif re.match("T1",line):
-        entries['title'] = line[6:-1]
-      elif re.match("JA",line):
-        entries['journal'] = line[6:-1]
-      elif re.match("IS",line):
-        entries['number'] = line[6:-1]
-      elif re.match("SP",line):
-        entries['startpage'] = line[6:-1]
-      elif re.match("EP",line):
-        entries['endpage'] = line[6:-1]
-      elif re.match("SN",line):
-        entries['isbn'] = line[6:-1]
-      elif re.match("AB",line):
-        entries['abstract'] = line[6:-1]
-      elif re.match("UR",line):
-        entries['url'] = line[6:-1]
+    with open(risFile) as f:
+      for line in f:
+        if re.match("PY",line):
+          entries['year'] = line[6:10]
+        elif re.match("AU",line):
+          entries['authors'].append(line[6:-1])
+        elif re.match("VL",line):
+          entries['volume'] = line[6:-1]
+        elif re.match("TI",line):
+          entries['title'] = line[6:-1]
+        elif re.match("T1",line):
+          entries['title'] = line[6:-1]
+        elif re.match("JA",line):
+          entries['journal'] = line[6:-1]
+        elif re.match("IS",line):
+          entries['number'] = line[6:-1]
+        elif re.match("SP",line):
+          entries['startpage'] = line[6:-1]
+        elif re.match("EP",line):
+          entries['endpage'] = line[6:-1]
+        elif re.match("SN",line):
+          entries['isbn'] = line[6:-1]
+        elif re.match("AB",line):
+          entries['abstract'] = line[6:-1]
+        elif re.match("UR",line):
+          entries['url'] = line[6:-1]
 
     bibStr = ('@article{' + key + ',\n'
                   + 'author={' + (" and ".join(entries['authors'])) + '},\n'
