@@ -25,17 +25,17 @@ fi
 #  exit 1
 #fi
 
-# check if repo is clean or need commit
-git update-index --refresh >/dev/null 2>&1
-if ! git diff-index --quiet HEAD --; then
-  echo "uncommitted changes exist in repo, commit your changes before building a release"
-  exit 1
-fi
-
 # extract version info from setup.py and check if successful
 ver="$(./dev/update-setup.sh --clean)"
 if [[ "$ver" == "" ]]; then
   echo "failed to extract current version from setup.py"
+  exit 1
+fi
+
+# check if repo is clean or need commit
+git update-index --refresh >/dev/null 2>&1
+if ! git diff-index --quiet HEAD --; then
+  echo "uncommitted changes exist in repo, commit your changes before building a release"
   exit 1
 fi
 
@@ -58,3 +58,4 @@ pip install --upgrade pip build twine setuptools \
   && echo '=======================================' \
   && echo '' \
   && python -m twine upload dist/*
+
