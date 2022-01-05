@@ -135,6 +135,13 @@ def main():
   #s.add_argument('-L', '--extra-long', action='store_true',
   #               help='print full pdf2txt result instead of path only')
 
+  # sync subcommand
+  s = sub.add_parser('sync',
+                     help='sync library pdfs to a tablet or other device')
+  addVerboseArg(s)
+  s.add_argument('-p', '--sync-path',
+                 help='path to the device root that is to be synced.')
+
   # diff subcommand
   s = sub.add_parser('diff',
                      help='build pdfs that show changes between file versions')
@@ -173,11 +180,13 @@ def main():
   s.add_argument('name', nargs='*',
                  help='journal name, abbreviation or partial name')
 
+  # lint subcommand
   s = sub.add_parser('lint',
                      help='search latex project for potential errors')
   addVerboseArg(s)
   addTexFileArg(s)
 
+  # config subcommand
   s = sub.add_parser('config',
                      help='print location of config file and exit')
   s.add_argument('-o', '--open', action='store_true',
@@ -230,6 +239,9 @@ def main():
 
   elif args.command == 'lib':
     from .subcommands import lib as cmd
+
+  elif args.command == 'sync':
+    from .subcommands import sync as cmd
 
   elif args.command == 'diff':
     from .subcommands import diff as cmd

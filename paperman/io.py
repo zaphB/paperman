@@ -180,7 +180,7 @@ def select(msg, options, default=None):
 
 def startup():
   _init()
-  msg = _indentMsg([f'starting papaerman v{__version__}'])
+  msg = _indentMsg([f'starting paperman v{__version__}'])
   info('', logOnly=True)
   info('-'*len(msg), logOnly=True)
   info(msg, logOnly=True)
