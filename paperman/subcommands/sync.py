@@ -71,11 +71,14 @@ def main(args):
       if f.endswith('.pdf'):
         local = f'{libPath}/{relPath}/{f}'
 
-        # copy if file doesn ot exist locally or if sizes differ
-        if (os.path.exists(local)
-            or os.stat(local).st_size != os.stat(f'{root}/{f}').st_size):
+        # consider copy if file doesn ot exist locally or if sizes differ,
+        # skip folder names beginning with a dot
+        if (not relPath.startswith('.')
+              and (not os.path.exists(local)
+                 or os.stat(local).st_size != os.stat(f'{root}/{f}').st_size)):
 
-          # create target path
+          # create target path and copy if target does not exist or has
+          # different size
           target = f'{libPath}/annotated/{relPath}/{f}'
           if (not os.path.exists(target) or
                 os.stat(target).st_size != os.stat(root+'/'+f).st_size):
