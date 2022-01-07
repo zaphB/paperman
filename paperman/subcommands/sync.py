@@ -11,7 +11,7 @@ def main(args):
   else:
     syncPath = os.path.expanduser(cfg.get('library_sync_device'))
   if not syncPath:
-    io.err('library_sync_device config is not set up.')
+    io.err('library_sync_device config is not set up')
     return
 
   # clean path
@@ -21,7 +21,7 @@ def main(args):
   # test if sync path is among mounted paths
   mounts = subprocess.run(['mount'], capture_output=True).stdout.decode()
   if syncPath not in mounts:
-    io.err(f'sync device at {syncPath} does not seem to be mounted.')
+    io.err(f'sync device at {syncPath} does not seem to be mounted')
     return
 
   # try to place busy file
@@ -71,20 +71,22 @@ def main(args):
       if f.endswith('.pdf'):
         local = f'{libPath}/{relPath}/{f}'
 
-        if os.path.exists(local):
-          if os.stat(local).st_size != os.stat(f'{root}/{f}').st_size:
-            # create target path
-            target = f'{libPath}/annotated/{relPath}/{f}'
-            if (not os.path.exists(target) or
-                  os.stat(target).st_size != os.stat(root+'/'+f).st_size):
-              io.info(f'downloading annotated {relPath}/{f}')
-              os.makedirs(os.path.dirname(target), exist_ok=True)
-              shutil.copy(root+'/'+f, target)
-              nothingDone = False
+        # copy if file doesn ot exist locally or if sizes differ
+        if (os.path.exists(local)
+            or os.stat(local).st_size != os.stat(f'{root}/{f}').st_size):
+
+          # create target path
+          target = f'{libPath}/annotated/{relPath}/{f}'
+          if (not os.path.exists(target) or
+                os.stat(target).st_size != os.stat(root+'/'+f).st_size):
+            io.info(f'downloading annotated {relPath}/{f}')
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            shutil.copy(root+'/'+f, target)
+            nothingDone = False
 
   # indicate that something happened even if nothing was copied
   if nothingDone:
-    io.info('nothing to do.')
+    io.info('nothing to do')
 
   # remove busy file
   os.remove(syncPath+'/paperman-sync-busy')
