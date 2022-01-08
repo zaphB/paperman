@@ -1,11 +1,12 @@
 # Latex Project and Bibliography Management Utilities
 
 Paperman is a command line utility designed to accelerate your latex writing workflow by automating tasks as:
- * finding and copying frequently used images, bibtex entries and input tex-files from your other documents
+ * finding and copying frequently used images, bibtex entries and input tex-files from your other tex documents
  * identifying unused image files and bibtex entries in your latex project
- * maintaining consistent capitalization of, e.g., names in titles in bibtex entries
- * maintaining consistent usage of ISO4 abbreviated or full journal names
- * renaming and organizing downloaded bib and pdf files
+ * maintaining consistent capitalization of titles in bibtex entries
+ * maintaining consistent usage of ISO4 abbreviated or full journal names in .bib files
+ * organizing and maintaining your personal library of .bib and .pdf files
+ * syncing your library to a tablet/ereader and keeping track of your annotated files
 
 
 # Installation and configuration
@@ -52,6 +53,11 @@ Without any options, `paperman lib` reports the status of your library, given by
 ### `paperman journal`
 
 Paperman maintains a list of journal full names and their abbreviations. This list is populated with journals from [this database](https://www.cas.org/support/documentation/references/corejournals) and is automatically extended if previously unknown journals appear in newly added papers. The command `paperman journal` lists all known journals. The command `paperman journal <query>` lists all journals that match the query. By default both abbreviation and full journal name are displayed. The `-f` and `-a` options changed this behavior to only display abbreviated or full names.
+
+
+### `paperman sync`
+
+Without any options, `paperman sync` tries to sync your library's pdf files with the device mounted at the path given by the `library_sync_device` config entry. To manually pass a mount point, use the `-p` option. Documents older than the value of the config entry `library_sync_max_age` in seconds are ignored when syncing, where the time that passed since the "last modified" time of the pdf is taken as its age. Any pdf found on the sync device that does not exist in the local library, or has a different size than its counterpart in the local library, is copied to the subfolder 'annotated' in the local library.
 
 
 ## Managing images, bibliography and input files of a latex project
