@@ -58,6 +58,15 @@ class Cite:
     return self.key == cite.key
 
 
+  def compareAuthorTitle(self):
+    cmp = lambda a: re.sub(r'[^a-z0-9]+', '', a.lower()).replace('and', '')
+    return 'cmp'+cmp(self.get('author', ''))+cmp(self.get('title', ''))
+
+
+  def authorAndTitleEqual(self, cite):
+    return self.compareAuthorTitle() == cite.compareAuthorTitle()
+
+
   def __gt__(self, cite):
     return self.key > cite.key
 
@@ -69,6 +78,13 @@ class Cite:
   def __getitem__(self, item):
     _, val = self._findFieldKeyValuePair(item)
     return val
+
+
+  def get(self, item, default=None):
+    res = self[item]
+    if res is None:
+      return default
+    return res
 
 
   def __setitem__(self, item, value):

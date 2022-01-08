@@ -30,6 +30,7 @@ def main(args):
   scan = not search and not fulltextSearch
   healthyCount = 0
   foundDuplicates = {}
+  foundTrueDuplicates = {}
   unpairedFiles = []
   invalidBibFiles = []
   invalidPdfFiles = []
@@ -37,6 +38,10 @@ def main(args):
   # walk through library
   hasWarnedDepth = False
   for root, dirs, files in os.walk(libraryPath, topdown=True):
+    # skip annotated folder
+    if os.path.relpath(root, libraryPath).startswith('annotated'):
+      continue
+
     # abort tree is too deep
     if root.count(os.sep)-libraryPath.count(os.sep)-2 > cfg.get('max_directory_depth'):
       io.verb(f'skipping subfolders of {root}')
@@ -54,6 +59,7 @@ def main(args):
         break
       dirs.remove(i[0])
 
+    # loop through files in dir
     for f in files:
       path = os.path.join(root, f)
       if any([f.lower().endswith('.'+e) for e in cfg.get('bibtex_extensions')]):
@@ -80,9 +86,15 @@ def main(args):
           except:
             invalidBibFiles.append(path)
           else:
+            # add to duplicate keys dict
             if c.key not in foundDuplicates:
               foundDuplicates[c.key] = []
             foundDuplicates[c.key].append(path)
+
+            # add to true duplicates dict
+            if c.compareAuthorTitle() not in foundTrueDuplicates:
+              foundTrueDuplicates[c.compareAuthorTitle()] = []
+            foundTrueDuplicates[c.compareAuthorTitle()].append(path)
 
             if os.path.exists('.'.join(path.split('.')[:-1])+'.pdf'):
               healthyCount += 0.5
@@ -151,21 +163,44 @@ def main(args):
   if scan:
     foundDuplicates = {k: v for k, v in foundDuplicates.items()
                                                     if len(v) > 1}
+    duplCount = sum([len(v)-1 for v in foundDuplicates.values()])
+    foundTrueDuplicates = {k: v for k, v in foundTrueDuplicates.items()
+                                                    if len(v) > 1}
+    trueDuplCount = sum([len(v)-1 for v in foundTrueDuplicates.values()])
     io.info(f'done scanning library in {libraryPath},',
-            f'found {healthyCount} valid looking entries',
+            f'found {healthyCount} valid looking entries', '-',
             *([f'found {len(unpairedFiles)} unpaired files:']
-              +[f'  {f[len(libraryPath)+1:]}' for f in unpairedFiles]
+              +[f'  {f[len(libraryPath)+1:]}' for f in unpairedFiles]+['-']
                         if unpairedFiles else []),
-            '-',
-            *([f'found {len(foundDuplicates)} duplicates:']
-              +['  '+', '.join([_d[len(libraryPath)+1:] for _d in d])
-                                      for d in foundDuplicates.values()]
+
+            *([f'found {duplCount} duplicate keys:']
+              +['  '+'\n  '.join([_d[len(libraryPath)+1:] for _d in d])
+                                      for d in foundDuplicates.values()]+['-']
                         if foundDuplicates else []),
-            '-',
+
+            *([f'found {trueDuplCount} true duplicates (title and authors identical):']
+              +['  '+'\n  '.join([_d[len(libraryPath)+1:] for _d in d])
+                                      for d in foundTrueDuplicates.values()]+['-']
+                        if foundTrueDuplicates else []),
+
             *([f'found {len(invalidBibFiles)} invalid bib files:']
-              +[f'  {b[len(libraryPath)+1:]}' for b in invalidBibFiles]
+              +[f'  {b[len(libraryPath)+1:]}' for b in invalidBibFiles]+['-']
                         if invalidBibFiles else []),
-            '-',
+
             *([f'found {len(invalidPdfFiles)} invalid pdf files:']
               +[f'  {p[len(libraryPath)+1:]}' for p in invalidPdfFiles]
                         if invalidPdfFiles else []))
+
+    # offer removing duplicates
+    if (trueDuplCount
+        and io.conf(f'remove {trueDuplCount} true duplicates from library?',
+                    default=False)):
+      for paths in foundTrueDuplicates.values():
+        for path in sorted(paths)[:-1]:
+          dir, base = os.path.split(path)
+          base = '.'.join(base.split('.')[:-1])
+          for p in os.listdir(dir):
+            if p.startswith(base):
+              rem = os.path.join(dir, p)
+              io.info(f'removing {rem}')
+              os.remove(rem)
