@@ -262,6 +262,10 @@ class TexFile:
         visited.append(i)
 
     for ln, l in self.enumContent():
+      # skip lines marked as ok:
+      if 'nolint' in l.split() or '%nolint' in l.split():
+        continue
+
       # search for dollars without line break protection
       i = -1
       lastOpening = None
@@ -295,6 +299,13 @@ class TexFile:
           bs = '\\'
           yield (self.path, ln,
                  f'found latex command {bs}{cmd}, which is on avoid-list')
+
+      # find double words
+      _l = re.sub(r'\s+', ' ', l.replace(',', '').replace('.', ''))
+      for w1, w2 in zip(_l.split()[:-1], _l.split()[1:]):
+        if w1 == w2:
+          yield (self.path, ln,
+                 f'found duplicate word "{w1}"')
 
       # spellcheck
       # TODO
