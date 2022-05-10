@@ -33,6 +33,13 @@ _DEFAULT_CFG = dict(
     convert_journal_to_full_name = False,
     protect_capitalization_if_unprotected = True
   ),
+  clean=dict(
+    trash_folder = '~/Desktop/paperman-trash',
+    ignore_paths = [],
+    required_suffs = ['tex', 'pdf', 'aux'],
+    clean_suffs = ['aux', 'bcf', 'log', 'snm', 'vrb', 'run.xml', 'synctex',
+                   'nav', 'blg', 'fls', 'fdb_latexmk', 'toc', 'tdo', 'out']
+  ),
   lint=dict(
     avoid_commands_in_toplevel=[],
     avoid_commands = [],
