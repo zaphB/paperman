@@ -30,12 +30,12 @@ def logExceptionsAndRaise(func):
 
 
 def cacheReturnValue(func):
-  def wrapper(self, *args, **kwargs):
-    cacheAttr = '_'+func.__name__
-    if (not hasattr(self, cacheAttr)
-         or getattr(self, cacheAttr) is None):
-      setattr(self, cacheAttr, func(self, *args, **kwargs))
-    return getattr(self, cacheAttr)
+  def wrapper(*args, **kwargs):
+    cacheAttr = '__cachedReturnValue__'
+    if (not hasattr(func, cacheAttr)
+         or getattr(func, cacheAttr) is None):
+      setattr(func, cacheAttr, func(*args, **kwargs))
+    return getattr(func, cacheAttr)
   return wrapper
 
 

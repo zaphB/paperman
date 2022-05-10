@@ -26,6 +26,10 @@ _DEFAULT_CFG = dict(
     merge_all_found_info = True,
     remove_fields = ['abstract'],
     generate_url_from_doi = True,
+    repair_doi = True,
+    verify_url_exists = True,
+    verify_doi_exists = True,
+    doi_and_url_verification_max_age_months = 1,
     force_double_hyphen_in_pages = True,
     keep_only_startpage_in_pages = False,
     convert_month_to_number = True,
@@ -56,7 +60,9 @@ _DEFAULT_CFG = dict(
   library_sync_max_age = 365*24*60*60,
   z_bib_words_protect_capitalization = [],
   z_bib_words_dont_protect_capitalization = [],
-  z_bib_journals = {}
+  z_bib_journals = {},
+  z_verified_urls = [],
+  z_verified_dois = []
 )
 
 _REQUIRED_CFG = dict()

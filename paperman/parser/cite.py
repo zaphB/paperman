@@ -1,10 +1,77 @@
 import re
+import requests
+import time
 
 from .. import io
 from .. import cfg
 from .. import utils
 
 FORBIDDEN_KEY_CHARS = r'''#'",=(){}%~\ '''
+
+
+@utils.cacheReturnValue
+def hasNetwork():
+  try:
+    requests.get('https://pypi.org/project/paperman/', timeout=1)
+    return True
+  except KeyboardInterrupt:
+    raise
+  except:
+    io.warn('not connected to the internet, cannot check citation urls '
+            'and dois')
+    return False
+
+
+def isDoiValid(doi):
+  io.dbg(f'verifying doi {doi}...')
+  err = _isDoiOrUrlValid(doi, 'z_verified_dois',
+                          lambda r: '' if r.status_code == 200
+                                      else f'http status code {r.status_code}',
+                          prefix='https://doi.org/')
+  if not err:
+    return ''
+  return f'invalid doi: {err}'
+
+
+def isUrlValid(url):
+  io.dbg(f'verifying url {url}...')
+  err = _isDoiOrUrlValid(url, 'z_verified_urls',
+                          lambda r: '' if r.status_code == 200
+                                      else f'http status code {r.status_code}')
+  if not err:
+    return ''
+  return f'invalid url: {err}'
+
+
+def _isDoiOrUrlValid(url, validCfgListKey, validateFunc, prefix=''):
+  url = url.strip()
+  try:
+    verified = [(t, u) for t, u in cfg.get(validCfgListKey)
+                      if time.time()-t < 30*24*60*60*cfg.get('bib_repair',
+                              'doi_and_url_verification_max_age_months')]
+  except KeyboardInterrupt:
+    raise
+  except:
+    verified = []
+  if url in [u for t, u in verified]:
+    result = ''
+  else:
+    result = ''
+    #io.dbg(f'requesting {prefix+url}')
+    r = None
+    if hasNetwork():
+      try:
+        r = requests.get(prefix+url, timeout=1)
+      except KeyboardInterrupt:
+        raise
+      except Exception as e:
+        result = str(e)
+    if result == '' and r is not None:
+      result = validateFunc(r)
+      if not result:
+        verified.append((time.time(), url))
+  cfg.set(validCfgListKey, verified)
+  return result
 
 
 def shouldBeProtected(fullString, string, askProtect=True):
@@ -176,12 +243,39 @@ class Cite:
   def pretty(self):
     fieldsStr = ''
     if self.fields is not None:
+      # strip http etc. from doi field if existing
+      doi = self['doi']
+      if (cfg.get('bib_repair', 'repair_doi')
+          and doi is not None):
+        for strip in ('http://doi.org/', 'https://doi.org/'):
+          if doi.startswith(strip):
+            self['doi'] = doi[len(strip):]
+            break
+
       # replace url field if doi field exists
       doi = self['doi']
       if (cfg.get('bib_repair', 'generate_url_from_doi')
                 and doi is not None):
         self['doi'] = doi
         self['url'] = f'https://doi.org/{doi}'
+
+      # check if url is available if connected to the internet and url present
+      url = self['url']
+      if (cfg.get('bib_repair', 'verify_url_exists')
+          and url is not None):
+        err = isUrlValid(url)
+        if err:
+          io.warn(f'citation {self.key} has {err}')
+
+
+      # check if doi is valid if connected to the internet and doi present
+      doi = self['doi']
+      if (cfg.get('bib_repair', 'verify_doi_exists')
+          and doi is not None):
+        err = isDoiValid(doi)
+        if err:
+          io.warn(f'citation {self.key} has {err}')
+
 
       # reformat pages field if exists
       pages = self['pages']
@@ -196,7 +290,7 @@ class Cite:
         if m:
           self['pages'] = m.groups()[0]+'--'+m.groups()[1]
 
-      # replace url field if doi field exists
+      # convert month field to number if given in string representation
       month = self['month']
       if (cfg.get('bib_repair', 'convert_month_to_number')
                 and month is not None):
