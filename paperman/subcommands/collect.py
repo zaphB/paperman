@@ -71,10 +71,13 @@ def main(args):
 
           # load and parse bib file
           if bibPath.lower().endswith('.ris'):
-            cites = parser.BibFile.fromRis('key', bibPath).cites()
+            r = parser.BibFile.fromRis('key', bibPath)
+            io.dbg(r)
+            cites = r.cites()
           else:
             cites = parser.BibFile(bibPath).cites()
 
+          io.dbg('cites:', cites)
           if len(cites) == 1:
             cite = cites[0]
 

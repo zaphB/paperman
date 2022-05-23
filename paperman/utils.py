@@ -31,11 +31,23 @@ def logExceptionsAndRaise(func):
 
 def cacheReturnValue(func):
   def wrapper(*args, **kwargs):
-    cacheAttr = '__cachedReturnValue__'
-    if (not hasattr(func, cacheAttr)
-         or getattr(func, cacheAttr) is None):
-      setattr(func, cacheAttr, func(*args, **kwargs))
-    return getattr(func, cacheAttr)
+    self = func
+    if len(args) > 0:
+      try:
+        setattr(args[0], '__dummy_attribute_not_used_anywhere___', None)
+        self = args[0]
+        io.dbg(f'cacheReturnValue decorator detected class '
+               f'{self.__class__.__name__}')
+      except:
+        pass
+    if self is func:
+      io.dbg(f'cacheReturnValue decorator detected function '
+             f'{self.__name__}')
+    cacheAttr = '_'+func.__name__
+    if (not hasattr(self, cacheAttr)
+         or getattr(self, cacheAttr) is None):
+      setattr(self, cacheAttr, func(*args, **kwargs))
+    return getattr(self, cacheAttr)
   return wrapper
 
 
