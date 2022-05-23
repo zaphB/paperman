@@ -8,18 +8,35 @@ from .. import utils
 
 FORBIDDEN_KEY_CHARS = r'''#'",=(){}%~\ '''
 
+requests.packages.urllib3.util.connection.HAS_IPV6 = False
+
 
 @utils.cacheReturnValue
 def hasNetwork():
+  t0 = time.time()
   try:
     requests.get('https://pypi.org/project/paperman/', timeout=1)
-    return True
+    result = True
   except KeyboardInterrupt:
     raise
   except:
     io.warn('not connected to the internet, cannot check citation urls '
             'and dois')
-    return False
+    result = False
+
+  # begin of workaround
+  #  if ipv6 is misconfigured or not availabe requests.get(...) works
+  #  but is extremely slow, because it only falls back to ipv4 after
+  #  the timeout. This workaround (dirtily) detects misconfigured ipv6
+  #  by measuring the time that requests.get(...) took and disables
+  #  future use of ipv6 connections if it took longer than the 
+  #  timeout.
+  if result and time.time()-t0 > 1:
+    io.verb('disabling ipv6 connections')
+    requests.packages.urllib3.util.connection.HAS_IPV6 = False
+  # end of workaround
+  
+  return result
 
 
 def isDoiValid(doi):
@@ -61,7 +78,7 @@ def _isDoiOrUrlValid(url, validCfgListKey, validateFunc, prefix=''):
     r = None
     if hasNetwork():
       try:
-        r = requests.get(prefix+url, timeout=1)
+        r = requests.get(prefix+url, timeout=5)
       except KeyboardInterrupt:
         raise
       except Exception as e:
@@ -254,8 +271,10 @@ class Cite:
 
       # replace url field if doi field exists
       doi = self['doi']
+      url = self['url']
       if (cfg.get('bib_repair', 'generate_url_from_doi')
-                and doi is not None):
+                and doi is not None
+                and url is None):
         self['doi'] = doi
         self['url'] = f'https://doi.org/{doi}'
 
