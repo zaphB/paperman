@@ -39,7 +39,10 @@ def main(args):
 
   # walk through library pdfs and upload missing ones
   libPath = os.path.expanduser(cfg.get('library_path'))
-  for root, dirs, files in os.walk(libPath):
+  for root, dirs, files in os.walk(libPath, topdown=True):
+    dirs[:] = [d for d in dirs if not d.startswith('.')]
+    files[:] = [f for f in files if not f.startswith('.')]
+
     for f in files:
       relPath = root[len(libPath):]
       if relPath.startswith('/'):
@@ -61,7 +64,10 @@ def main(args):
             nothingDone = False
 
   # copying files that changed on the device to annotated folder
-  for root, dirs, files in os.walk(syncPath):
+  for root, dirs, files in os.walk(syncPath, topdown=True):
+    dirs[:] = [d for d in dirs if not d.startswith('.')]
+    files[:] = [f for f in files if not f.startswith('.')]
+    
     for f in files:
       # check if file also exists in library but has different size
       relPath = root[len(syncPath):]
