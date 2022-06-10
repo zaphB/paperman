@@ -1,5 +1,6 @@
 import re
 import requests
+import cloudscraper
 import time
 
 from .. import io
@@ -8,11 +9,15 @@ from .. import utils
 
 FORBIDDEN_KEY_CHARS = r'''#'",=(){}%~\ '''
 
-requests.packages.urllib3.util.connection.HAS_IPV6 = False
-
-
 @utils.cacheReturnValue
 def hasNetwork():
+  for _ in range(5):
+    if _hasNetwork():
+      return True
+    time.sleep(1)
+  return _hasNetwork()
+
+def _hasNetwork():
   t0 = time.time()
   try:
     requests.get('https://pypi.org/project/paperman/', timeout=1)
@@ -29,21 +34,19 @@ def hasNetwork():
   #  but is extremely slow, because it only falls back to ipv4 after
   #  the timeout. This workaround (dirtily) detects misconfigured ipv6
   #  by measuring the time that requests.get(...) took and disables
-  #  future use of ipv6 connections if it took longer than the 
+  #  future use of ipv6 connections if it took longer than the
   #  timeout.
   if result and time.time()-t0 > 1:
     io.verb('disabling ipv6 connections')
     requests.packages.urllib3.util.connection.HAS_IPV6 = False
   # end of workaround
-  
+
   return result
 
 
 def isDoiValid(doi):
   io.dbg(f'verifying doi {doi}...')
   err = _isDoiOrUrlValid(doi, 'z_verified_dois',
-                          lambda r: '' if r.status_code == 200
-                                      else f'http status code {r.status_code}',
                           prefix='https://doi.org/')
   if not err:
     return ''
@@ -52,15 +55,22 @@ def isDoiValid(doi):
 
 def isUrlValid(url):
   io.dbg(f'verifying url {url}...')
-  err = _isDoiOrUrlValid(url, 'z_verified_urls',
-                          lambda r: '' if r.status_code == 200
-                                      else f'http status code {r.status_code}')
+  err = _isDoiOrUrlValid(url, 'z_verified_urls')
   if not err:
     return ''
   return f'invalid url: {err}'
 
 
-def _isDoiOrUrlValid(url, validCfgListKey, validateFunc, prefix=''):
+_cloudscraper = None
+
+def _getScraper():
+  global _cloudscraper
+  if _cloudscraper is None:
+    _cloudscraper = cloudscraper.create_scraper()
+  return _cloudscraper
+
+
+def _isDoiOrUrlValid(url, validCfgListKey, prefix=''):
   url = url.strip()
   try:
     verified = [(t, u) for t, u in cfg.get(validCfgListKey)
@@ -70,25 +80,50 @@ def _isDoiOrUrlValid(url, validCfgListKey, validateFunc, prefix=''):
     raise
   except:
     verified = []
+
+  # check if in list
   if url in [u for t, u in verified]:
     result = ''
+
+  # try to fetch urls
   else:
     result = ''
     #io.dbg(f'requesting {prefix+url}')
     r = None
     if hasNetwork():
+      io.dbg(f'requesting url {prefix+url}')
       try:
         r = requests.get(prefix+url, timeout=5)
+        if r.status_code//10 != 20:
+          if 'cloudflare' in r.text.lower():
+            raise ValueError('cloudflare protection')
+          raise ValueError(f'status code is {r.status_code}')
       except KeyboardInterrupt:
         raise
-      except Exception as e:
-        result = str(e)
-    if result == '' and r is not None:
-      result = validateFunc(r)
-      if not result:
-        verified.append((time.time(), url))
+      except Exception as _e:
+        try:
+          r = _getScraper().get(prefix+url, timeout=5)
+          if r.status_code//10 != 20:
+            raise ValueError(f'status code is {r.status_code}')
+        except KeyboardInterrupt:
+          raise
+        except Exception as e:
+          result = 'requests: '+str(_e)+', cloudscraper: '+str(e)
+
+  if not result:
+    verified.append((time.time(), url))
+
   cfg.set(validCfgListKey, verified)
   return result
+
+
+_printedCloudflareWarning = False
+
+def _printCloudflareWarning():
+  global _printedCloudflareWarning
+  if not _printedCloudflareWarning:
+    io.warn(f'cloudflare protection prevented checking some URLs and/or DOIs')
+    _printedCloudflareWarning = True
 
 
 def shouldBeProtected(fullString, string, askProtect=True):
@@ -284,7 +319,11 @@ class Cite:
           and url is not None):
         err = isUrlValid(url)
         if err:
-          io.warn(f'citation {self.key} has {err}')
+          if 'cloudflare' in err.lower():
+            _printCloudflareWarning()
+            io.dbg(f'citation {self.key} has {err}')
+          else:
+            io.warn(f'citation {self.key} has {err}')
 
 
       # check if doi is valid if connected to the internet and doi present
@@ -293,7 +332,11 @@ class Cite:
           and doi is not None):
         err = isDoiValid(doi)
         if err:
-          io.warn(f'citation {self.key} has {err}')
+          if 'cloudflare' in err.lower():
+            _printCloudflareWarning()
+            io.dbg(f'citation {self.key} has {err}')
+          else:
+            io.warn(f'citation {self.key} has {err}')
 
 
       # reformat pages field if exists
@@ -455,5 +498,6 @@ class Cite:
         fieldsStr = f',\n{fieldsStr[:-2]}\n'
 
     res = f'@{self.section}{{{self.key}'+fieldsStr+'}'
-    io.dbg('pretty printed citation:', res)
+    #io.dbg('pretty printed citation:', res)
+
     return res
