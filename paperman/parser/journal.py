@@ -13,10 +13,11 @@ def _beginsMatch(string, query):
 
 
 def _filtAbbr(a):
-  return re.sub(r'\([^)]*\)', '', a)
+  return re.sub(r'\([^)]*\)', '', a).strip()
+
 
 def _filtName(n):
-  return re.sub(r'\([^)]*\)', '', n)
+  return re.sub(r'\([^)]*\)', '', n).strip()
 
 
 def find(*name):
@@ -38,7 +39,7 @@ def find(*name):
 
 
 def _compareStr(s):
-  return ' '.join([re.sub(r'[{}\\"]', '', _s.strip('.:-_'))
+  return ' '.join([re.sub(r'[{}\\"\.:-_]', '', _s.strip())
                     for _s in s.split(':')[0].lower().split()])
 
 
