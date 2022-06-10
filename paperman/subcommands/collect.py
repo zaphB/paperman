@@ -52,6 +52,7 @@ def main(args):
   # mainloop
   while True:
     try:
+      t0 = time.time()
       for p in collectPaths:
         p = os.path.expanduser(p)
 
@@ -124,7 +125,12 @@ def main(args):
       # if watch option is not set run mainloop only once
       if not args.watch:
         break
-      time.sleep(.5)
+
+      # calculate sleep to not consume more than 1% of cpu-load, but also not
+      # faster less than 0.1s or more than 5s
+      sleepTime = min(5, max(.1, 1e2*(time.time()-t0)))
+      io.verb(f'sleeping for {sleepTime:.1f}s')
+      time.sleep(sleepTime)
 
     except KeyboardInterrupt:
       io.info('received ctrl+c interrupt, exiting...')
