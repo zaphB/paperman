@@ -368,7 +368,7 @@ class BibFile:
           entries['title'] = line[6:-1]
         elif re.match("T1",line):
           entries['title'] = line[6:-1]
-        elif re.match("JA",line):
+        elif re.match("JO",line):
           entries['journal'] = line[6:-1]
         elif re.match("IS",line):
           entries['number'] = line[6:-1]
