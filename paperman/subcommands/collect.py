@@ -37,13 +37,17 @@ def main(args):
     return
 
   # define routine to use for error reporting
+  lastErrStr = ''
   def onError(file, *err):
-    if args.err_to_file:
-      errStr = io.formatErr(f'failed to collect "{file}":', *err)
-      with open(os.path.join(os.path.dirname(file),
-                             'paperman-collect-error.txt'), 'w') as f:
-        f.write(errStr)
-    io.err(*err)
+    nonlocal lastErrStr
+    errStr = io.formatErr(f'failed to collect "{file}":', *err)
+    if lastErrStr.lower().strip() != errStr.lower().strip():
+      if args.err_to_file:
+        with open(os.path.join(os.path.dirname(file),
+                               'paperman-collect-error.txt'), 'w') as f:
+          f.write(errStr)
+      io.err(f'failed to collect "{file}":', *err)
+      lastErrStr = errStr
 
   # mainloop
   while True:
@@ -114,18 +118,17 @@ def main(args):
             onError(pdfPath, f'found unexpected citation count ({len(cites)}) in bib file')
 
         elif len(pdfs) or len(bibs):
-          onError(os.path.join(p, 'derp'),
-                  f'found {len(pdfs)} pdf candidates and {len(bibs)} bib',
-                  f'candidates in ', p,
-                  f'need to have exactly one of each to collect')
+          onError(p, f'found {len(pdfs)} pdf candidates and {len(bibs)} bib',
+                     f'need to have exactly one of each to collect')
 
       # if watch option is not set run mainloop only once
       if not args.watch:
         break
-      time.sleep(5)
+      time.sleep(.5)
 
     except KeyboardInterrupt:
-      raise
+      io.info('received ctrl+c interrupt, exiting...')
+      break
     except:
       if not args.watch:
         raise
