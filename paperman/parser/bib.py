@@ -89,6 +89,18 @@ class BibFile:
         res[-1].fieldsParseInfo = {}
       if currentItem in res[-1].fields:
         raiseErr(f'duplicate item "{currentItem}"')
+
+      # strip content between outermost braces/quotes
+      if ('opens' in currentValueParseInfo
+          and 'closes' in currentValueParseInfo
+          and len(_opens := currentValueParseInfo['opens'])
+          and len(_closes := currentValueParseInfo['closes'])):
+        _o, _c = min(_opens), max(_closes)
+        currentValue = (currentValue[:_o+1]
+                        + currentValue[_o+1:_c].strip()
+                        + currentValue[_c:]
+                       ).strip()
+
       res[-1].fields[currentItem] = currentValue.strip()
       res[-1].fieldsParseInfo[currentItem] = currentValueParseInfo
       #io.dbg(f'created new field for citation {res[-1].key}',
@@ -243,7 +255,8 @@ class BibFile:
           _assert(braceDepth is not None)
           braceDepth += 1
           _assert(currentValue is not None)
-          currentValueParseInfo['opens'].append(len(currentValue.lstrip()))
+          currentValue = currentValue.lstrip()
+          currentValueParseInfo['opens'].append(len(currentValue))
           currentValue += c
 
         # a seemingly unmatched } in value state means that citation is
@@ -262,17 +275,19 @@ class BibFile:
                   'found unmatched "}"')
           braceDepth -= 1
           _assert(currentValue is not None)
-          currentValueParseInfo['closes'].append(len(currentValue.lstrip()))
+          currentValue = currentValue.lstrip()
+          currentValueParseInfo['closes'].append(len(currentValue))
           currentValue += c
 
         # " sign while in "value" -> toggle quote depth if not within
         # curly braces, add to currentValue anyways
         elif c == '"' and state == 'value' and braceDepth == 0:
           _assert(quoteDepth is not None)
+          currentValue = currentValue.lstrip()
           if quoteDepth:
-            currentValueParseInfo['closes'].append(len(currentValue.lstrip()))
+            currentValueParseInfo['closes'].append(len(currentValue))
           else:
-            currentValueParseInfo['opens'].append(len(currentValue.lstrip()))
+            currentValueParseInfo['opens'].append(len(currentValue))
           quoteDepth = (1 if quoteDepth == 0 else 0)
           currentValue += c
 
