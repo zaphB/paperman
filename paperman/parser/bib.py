@@ -95,9 +95,16 @@ class BibFile:
           and 'closes' in currentValueParseInfo
           and len(_opens := currentValueParseInfo['opens'])
           and len(_closes := currentValueParseInfo['closes'])):
-        _o, _c = min(_opens), max(_closes)
+        # extract content between outermost curly braces
+        _o, _c = _opens[0], _closes[-1]
+        midPart = currentValue[_o+1:_c]
+
+        # shift last closing index according to removed spaces
+        _closes[-1] -= len(midPart) - len(midPart.strip())
+
+        # replace currentValue with stripped variant
         currentValue = (currentValue[:_o+1]
-                        + currentValue[_o+1:_c].strip()
+                        + midPart.strip()
                         + currentValue[_c:]
                        ).strip()
 
