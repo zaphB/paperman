@@ -186,8 +186,9 @@ class BibFile:
       # any other character records key
       elif state == 'key':
         _assert(currentKey is not None)
-        _assert(c not in ' \n\t',
-                f'unexpected end of citation key "{currentKey}", expected ","')
+        if len(currentKey.strip()):
+          _assert(c not in ' \n\t',
+                  f'unexpected end of citation key "{currentKey}", expected ","')
         _assert(c not in FORBIDDEN_KEY_CHARS,
                 f'forbidden charcter in citation key: {repr(c)}')
         currentKey += c
