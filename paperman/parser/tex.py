@@ -133,7 +133,14 @@ class TexFile:
 
     for p in paths:
       if not os.path.isdir(p):
-        io.verb(f'found graphicspath {p}, which does not exist, ignoring')
+        if (os.path.basename(p) == cfg.get('img_dir_name')
+              or p == cfg.get('img_dir_name')):
+          io.info(f'found graphicspath "{p}", which does not exist but matches '
+                  f'the configured img_dir_name ("{cfg.get("img_dir_name")}"), '
+                  'creating directory...')
+          os.makedirs(p, exist_ok=True)
+        else:
+          io.info(f'found graphicspath {p}, which does not exist, ignoring')
     res = [p for p in paths if os.path.isdir(p)]
     if res:
       io.verb(f'found graphicspaths of {self.path}: '

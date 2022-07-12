@@ -7,13 +7,13 @@ def main(args):
 
   unused = proj.unusedIncludedImgs()
   if unused:
-    io.info('found unused image files:', *sorted(unused))
+    io.info('detected unused image files:', *sorted(unused))
   else:
     io.info('no unused image files')
 
   missing = proj.missingIncludedImgs()
   if missing:
-    io.info('found missing images:', *sorted(missing))
+    io.info('detected missing images:', *sorted(missing))
   elif getattr(args, 'import'):
     io.info('no missing images, nothing to import')
   else:

@@ -7,13 +7,13 @@ def main(args):
 
   unused = proj.unusedCites()
   if unused:
-    io.info('found unused citations:', *sorted(unused))
+    io.info('detected unused citations:', *sorted(unused))
   else:
     io.info('no unused citations')
 
   missing = proj.missingCites()
   if missing:
-    io.info('found missing citations:', *sorted(missing))
+    io.info('detected missing citations:', *sorted(missing))
   elif getattr(args, 'import'):
     io.info('no missing citations, nothing to import')
   else:

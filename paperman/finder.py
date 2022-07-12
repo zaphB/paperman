@@ -86,7 +86,8 @@ def importImgs(imgs, imgDir):
   for img in imgs:
     candidates = []
     for i, p in enumerate(searchPaths):
-      candidates.extend([(i, c) for c in _fastGlob(os.path.join(p, img.fname+'.*'))])
+      candidates.extend([(i, c) for c in _fastGlob(
+                                        os.path.join(p, img.fname+'.*'))])
 
     # in case no candidate was found, add img to failed list and continue
     if not candidates:
@@ -100,6 +101,7 @@ def importImgs(imgs, imgDir):
     _, bestMatch = sortedCandidates[0]
 
     # copy best match to desired location
+    os.makedirs(imgDir, exist_ok=True)
     shutil.copy(bestMatch, imgDir)
     io.verb(f'copying {bestMatch} -> {imgDir}')
     success.append(img)
@@ -175,7 +177,8 @@ def importInclude(include):
     # try to import
     candidates = []
     for i, p in enumerate(searchPaths):
-       candidates.extend([(i, c) for c in _fastGlob(os.path.join(p, include))])
+       candidates.extend([(i, c) for c in _fastGlob(
+                                os.path.join(p, os.path.basename(include)))])
 
     # in case no candidate was found, add img to failed list and return
     if not candidates:
@@ -185,7 +188,8 @@ def importInclude(include):
     # generate sorting function according to config
     rules = cfg.get('input_search_priority').split()
     sortedCandidates = sorted(candidates, key=_candidateSortKey(rules))
-    io.dbg(f'first ten matching candidates sorted by {rules}:', sortedCandidates[:10])
+    io.dbg(f'first ten matching candidates sorted by {rules}:',
+           sortedCandidates[:10])
     _, bestMatch = sortedCandidates[0]
 
     # copy best match to desired location

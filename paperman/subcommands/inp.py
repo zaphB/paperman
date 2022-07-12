@@ -26,7 +26,7 @@ def main(args):
       io.err(r'failed to import \input{} file:',
              str(e))
     else:
-      io.info(r'found missing \input{} file:',
+      io.info(r'imported missing \input{} file:',
               str(e))
 
   else:
