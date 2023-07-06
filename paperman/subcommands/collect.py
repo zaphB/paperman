@@ -74,13 +74,23 @@ def main(args):
           pdfPath = pdfs[0]
           bibPath = bibs[0]
 
-          # load and parse bib file
-          if bibPath.lower().endswith('.ris'):
-            r = parser.BibFile.fromRis('key', bibPath)
-            io.dbg(r)
-            cites = r.cites()
-          else:
-            cites = parser.BibFile(bibPath).cites()
+          # load and parse bib file (retry five times in case bib file was not
+          # completely written when it was initially discovered)
+          for _ in range(5):
+            try:
+              if bibPath.lower().endswith('.ris'):
+                r = parser.BibFile.fromRis('key', bibPath)
+                io.dbg(r)
+                cites = r.cites()
+              else:
+                cites = parser.BibFile(bibPath).cites()
+              if len(cites) != 1:
+                raise ValueError('invalid number of citations in bib file')
+              break
+            except KeyboardInterrupt:
+              raise
+            except:
+              time.sleep(.1)
 
           io.dbg('cites:', cites)
           if len(cites) == 1:
@@ -102,12 +112,22 @@ def main(args):
               os.makedirs(os.path.dirname(target), exist_ok=True)
               if not any([f.startswith(target)
                               for f in os.listdir(os.path.dirname(target))]):
-                shutil.move(pdfPath, target+'.pdf')
-                io.info(f'moved "{pdfPath}" -> "{target}.pdf"')
-                with open(target+'.'+cfg.get('bibtex_extensions')[0], 'w') as f:
-                  f.write(cite.pretty()+'\n')
+                targetName = target+'.'+cfg.get('bibtex_extensions')[0]
+                try:
+                  with open(targetName, 'w') as f:
+                    f.write(cite.pretty()+'\n')
+                except:
+                  if os.path.exists(targetName):
+                    os.remove(targetName)
+                  raise
                 os.remove(bibPath)
-                io.info(f'moved "{bibPath}" -> "{target}.{cfg.get("bibtex_extensions")[0]}"')
+                #io.info(f'moved "{bibPath}" -> "{target}.{cfg.get("bibtex_extensions")[0]}"')
+                shutil.move(pdfPath, target+'.pdf')
+                #io.info(f'moved "{pdfPath}" -> "{target}.pdf"')
+                io.info(f'imported "{cite.key}"')
+
+                # reset lastErr memory
+                lastErrStr = ''
               else:
                 onError(pdfPath, 'failed to move files to library, target',
                         '"'+target+'"', 'already exists')
@@ -117,6 +137,10 @@ def main(args):
 
           else:
             onError(pdfPath, f'found unexpected citation count ({len(cites)}) in bib file')
+
+        # situation that naturally occurs, do not print error
+        elif (len(pdfs)==1 and len(bibs)==0) or (len(pdfs)==0 and len(bibs)==1):
+          pass
 
         elif len(pdfs) or len(bibs):
           onError(p, f'found {len(pdfs)} pdf candidates and {len(bibs)} bib',

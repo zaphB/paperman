@@ -50,6 +50,7 @@ _DEFAULT_CFG = dict(
 #    check_spelling=[]
   ),
   library_path = '~/Documents/bibliography',
+  library_sync_additional_paths = [],
   library_collect_paths = ['~/Desktop', '~/Downloads'],
   library_folder_pattern = '%Y-%m',
   library_max_filename_len = 60,

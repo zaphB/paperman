@@ -133,7 +133,14 @@ class TexFile:
 
     for p in paths:
       if not os.path.isdir(p):
-        io.verb(f'found graphicspath {p}, which does not exist, ignoring')
+        if (os.path.basename(p) == cfg.get('img_dir_name')
+              or p == cfg.get('img_dir_name')):
+          io.info(f'found graphicspath "{p}", which does not exist but matches '
+                  f'the configured img_dir_name ("{cfg.get("img_dir_name")}"), '
+                  'creating directory...')
+          os.makedirs(p, exist_ok=True)
+        else:
+          io.info(f'found graphicspath {p}, which does not exist, ignoring')
     res = [p for p in paths if os.path.isdir(p)]
     if res:
       io.verb(f'found graphicspaths of {self.path}: '
@@ -270,6 +277,7 @@ class TexFile:
       i = -1
       lastOpening = None
       opening = True
+      doWarn = False
       while True:
         i = l.find('$', i+1)
         if i < 0:
@@ -277,14 +285,24 @@ class TexFile:
         if opening:
           lastOpening = i
           opening = False
+          if l[i-1] != '}' and l[i+1] != '{':
+            doWarn = True
         else:
           extr = l[lastOpening:i+1]
           opening = True
-          if re.search(r'\$[^{].*\s.*[^}]\$', extr):
+          doWarn = False
+          #print(extr[1], extr[-2], re.search(r'[^a-zA-Z0-9\\S]', extr))
+          if ((extr[1] != '{' or extr[-2] != '}')
+                and re.search(r'[^a-zA-Z0-9\{\\S]', extr[2:-2])):
             yield (self.path, ln,
                    f'"{extr}"\n'
                    'math should be wrapped in curly braces to avoid\n'
                    'line breaks: not $a = b$ but ${a = b}$')
+      if doWarn:
+        yield (self.path, ln,
+               'math should be wrapped in curly braces to avoid\n'
+               'line breaks: not $a = b$ but ${a = b}$')
+
 
       # find commands that should not used or not be used in toplevel files
       avoidCommands = list(cfg.get('lint', 'avoid_commands'))
