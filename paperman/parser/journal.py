@@ -77,17 +77,18 @@ def getOrAsk(jour=None, descr=None):
 
   # and check if similar journals exist in db
   matches = find(jour)
-
+  options = [m[1] for m in matches[:9]] + ['<manually enter journal>']
+  
   # suggest generated abbreviation if pyiso4 is available
   try:
     import pyiso4.ltwa
-    abbreviate = pyiso4.ltwa.Abbreviate.create()
-    matches = [(abbreviate(jour), jour)] + matches
+    autoAbbrev = pyiso4.ltwa.Abbreviate.create()(jour)
+    matches = [(autoAbbrev, jour)] + matches
+    options = ['<guessed abbreviation: '+autoAbbrev+'>'] + options
   except ImportError:
     pass  
 
   if matches:
-    options = [m[1] for m in matches[:9]] + ['<manually enter journal>']
     i, j = io.select(f'journal {repr(jour)} not found in database,\n'
                      f'if this journal is among one of the following\n'
                      f'similar journals select it, else select to\n'
