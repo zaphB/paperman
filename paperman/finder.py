@@ -25,9 +25,15 @@ def _candidateSortKey(rules):
 
 
 def _fastGlob(path):
-  res = []
+  # walk through filesystem sub tree described by path up to the first '*'
   basePath = path.split('*')[0]
+
+  # remove any inner '../' and './' from match path, as they dont make sense there
+  matchPath = path.replace('/../', '/').replace('/./', '/')
+
+  res = []
   hasWarnedDepth = False
+  io.dbg(f'calling _fastGlob("{path}"), walking through "{basePath}"')
   for root, dirs, files in os.walk(basePath, topdown=True):
     # abort tree is too deep
     if root.count(os.sep)-basePath.count(os.path.sep)-2 > cfg.get('max_directory_depth'):
@@ -54,14 +60,14 @@ def _fastGlob(path):
       i = [d for d in dirs if d.startswith('.')]
       if not i:
         break
-      #io.dbg(f'skipped {i[0]}')
+      #io.dbg(f'skipped hidden directory {i[0]}')
       dirs.remove(i[0])
 
     # check if any file matches
     for f in files:
       fname = os.path.join(root, f)
-      #io.dbg(f'{fname}, {path}')
-      if fnmatch.fnmatch(fname, path):
+      #io.dbg(f' checked filename {fname} for match with {matchPath}')
+      if fnmatch.fnmatch(fname, matchPath):
         res.append(fname)
   return res
 
@@ -180,7 +186,7 @@ def importInclude(include):
        candidates.extend([(i, c) for c in _fastGlob(
                                 os.path.join(p, os.path.basename(include)))])
 
-    # in case no candidate was found, add img to failed list and return
+    # in case no candidate was found, add input to failed list and return
     if not candidates:
       failed.append(include)
       return False
