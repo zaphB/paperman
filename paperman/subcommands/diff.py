@@ -81,7 +81,7 @@ def main(args):
   # prepare old files
   if args.old_is_tag:
     if args.new_is_tag:
-      path = args.fname
+      path = args.filename
     else:
       path = args.new
     gitShowToBuildDir(args.old, path, 'paperman-diff-old')
@@ -91,7 +91,7 @@ def main(args):
   # prepare new files
   if args.new_is_tag:
     if args.old_is_tag:
-      path = args.fname
+      path = args.filename
     else:
       path = args.old
     gitShowToBuildDir(args.new, path, 'paperman-diff-new')
