@@ -28,6 +28,11 @@ Running `paperman --version` should print the proper version number.
 The entire configuration of paperman is stored in one config file. The location of this file depends on the operating system an can be printed with the `paperman config` command. `paperman config -o` can be used to open the config file in the editor `vim`, if vim is installed.
 
 
+## Optional dependencies
+
+If the [pyiso4](https://github.com/pierre-24/pyiso4) package is installed, paperman will suggest automatic abbreviation if encountering a new journal for the first time.
+
+
 # Usage
 
 All functionality is available through the `paperman` shell command, which has a number of subcommands. Use `paperman --help` or `paperman <subcommand> --help` for instructions on how to use possible options and parameters.
@@ -52,7 +57,7 @@ Without any options, `paperman lib` reports the status of your library, given by
 
 ### `paperman journal`
 
-Paperman maintains a list of journal full names and their abbreviations. This list is populated with journals from [this database](https://www.cas.org/support/documentation/references/corejournals) and is automatically extended if previously unknown journals appear in newly added papers. The command `paperman journal` lists all known journals. The command `paperman journal <query>` lists all journals that match the query. By default both abbreviation and full journal name are displayed. The `-f` and `-a` options changed this behavior to only display abbreviated or full names.
+Paperman maintains a list of journal full names and their abbreviations. This list is populated with journals from [this database](https://www.cas.org/support/documentation/references/corejournals) and is automatically extended if previously unknown journals appear in newly added papers. The command `paperman journal` lists all known journals. The command `paperman journal <query>` lists all journals that match the query. By default both abbreviation and full journal name are displayed. The `-f` and `-a` options change this behavior to only display abbreviated or full names.
 
 
 ### `paperman sync`
@@ -68,7 +73,6 @@ Paperman interprets any tex file in subfolders of the current directory that con
 
 This subcommand lists missing and unused images of the current latex project. Only images directly included with the `\includegraphics{}` command are detected by paperman. The command `paperman img -i` automatically imports missing images, if it finds files with matching filenames on the paths given by `img_search_paths` (defaults to '~/Documents') in the config file. If multiple images are found, the setting `img_search_priority` (defaults to 'path-order, newest') can be a string containing 'newest', 'oldest' and 'path-order', to define how files are prioritized. Paperman prefers to store all images of a latex project in one subfolder of the project. This folder name can be configured with `img_dir_name` (defaults to 'img').
 
-
 ### `paperman bib`
 
 This subcommand lists missing and unused citations of the current latex project. Only citations done with commands that contain cite in them, e.g. `\cite{...}`, `\fullcite{...}` or `\citeauthor{...}`, are detected by paperman. `paperman bib -i` automatically adds missing citations to the .bib file of the project if they can be found on the search paths configured by  `bib_search_paths` (defaults to '~/Documents') in the config. The field `bib_search_priority` (defaults to 'path-order, newest') allows defining which entry to prioritize in case of multiple found citations, analogous to the `img` subcommand.
@@ -77,11 +81,9 @@ The `bib_repair` config section contains a number of automatic fixes for bibtex 
 
 If paperman is unsure if the forced capitalization of a title via additional `{...}` is appropriate or if paperman cannot find a journal in its database, it will ask for help interactively and store the answers in the config file for the next time.
 
-
 ### `paperman input`
 
 This subcommand lists missing files in the current latex project which are required with the `\input{...}` command. Missing files can be automatically imported with `paperman input -i`. The search path for missing files is given by `input_search_paths` (defaults to '~/Documents') in the config, the search priority is given by `input_search_priority` (defaults to 'path-order, newest').
-
 
 ### `paperman import-all`
 
