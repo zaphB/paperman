@@ -358,6 +358,12 @@ class TexFile:
           yield (self.path, ln,
                  f'found duplicate word "{w1}"')
 
+      # detect commas before that and because
+      for word in ('because', 'that'):
+        if re.search(r',\s*'+word, l.lower()):
+          yield (self.path, ln,
+                 f'found comma before {word}')
+
       # spellcheck
       # TODO
 
