@@ -269,7 +269,26 @@ class TexFile:
         visited.append(i)
 
     # detect author entries and check whether they exist in whitelist
-    # TODO
+    authorPattern = r'([^\n]*)\\author\{([^}]*)\}([^\n]*)'
+    knownAuthors = list(cfg.get('lint', 'known_authors'))
+
+    for pre, authorName, post in re.findall(authorPattern, self.content(), re.M):
+      # skip lines marked as ok:
+      textAround = pre + ' ' + post
+      if 'nolint' in textAround.split() or '%nolint' in textAround.split():
+        continue
+      
+      # ask if author name should be added, complain otherwise
+      authorName = authorName.strip()
+      if authorName not in knownAuthors:
+        if io.conf(f'found author {authorName} which is not in known_authors list, ',
+                   f'add to list?', default=False):
+          knownAuthors = knownAuthors+[authorName]
+          cfg.set('lint', 'known_authors', knownAuthors)
+        else:
+          yield (self.path, nan,
+                 f'author name {authorName} is not in known_authors list')
+
 
     for ln, l in self.enumContent():
       # skip lines marked as ok:
