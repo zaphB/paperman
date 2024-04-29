@@ -268,9 +268,16 @@ class TexFile:
           yield l
         visited.append(i)
 
+    # detect author entries and check whether they exist in whitelist
+    # TODO
+
     for ln, l in self.enumContent():
       # skip lines marked as ok:
       if 'nolint' in l.split() or '%nolint' in l.split():
+        continue
+
+      # skip commented lines
+      if l.strip().startswith('%'):
         continue
 
       # search for dollars without line break protection
@@ -303,7 +310,6 @@ class TexFile:
                'math should be wrapped in curly braces to avoid\n'
                'line breaks: not $a = b$ but ${a = b}$')
 
-
       # find commands that should not used or not be used in toplevel files
       avoidCommands = list(cfg.get('lint', 'avoid_commands'))
       if self.isToplevel():
@@ -317,6 +323,14 @@ class TexFile:
           bs = '\\'
           yield (self.path, ln,
                  f'found latex command {bs}{cmd}, which is on avoid-list')
+
+      # detect words in avoid list
+      avoidWords = list(cfg.get('lint', 'avoid_words'))
+      for word in avoidWords:
+        # \b matches "word boundaries", i.e. white-spaces, string start/end etc.
+        if re.search(r'\b'+word.lower()+r'\b', l.lower()):
+          yield (self.path, ln,
+                 f'found word {word}, which is on avoid-list')
 
       # find double words
       _l = re.sub(r'\s+', ' ', l.replace(',', '').replace('.', ''))

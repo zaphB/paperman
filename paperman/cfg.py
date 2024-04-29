@@ -47,6 +47,7 @@ _DEFAULT_CFG = dict(
   lint=dict(
     avoid_commands_in_toplevel=[],
     avoid_commands = [],
+    avoid_words=[],
 #    check_spelling=[]
   ),
   library_path = '~/Documents/bibliography',
