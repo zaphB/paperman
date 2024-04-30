@@ -321,7 +321,7 @@ class Cite:
     if year:
       res.append(year)
 
-    return '-'.join(res)
+    return '_'.join(res)
 
 
   def pretty(self):
