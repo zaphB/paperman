@@ -345,6 +345,30 @@ class BibFile:
     return res
 
 
+  def _duplicates(self):
+    byKey, byGeneratedKey, byCompareAuthorTitle = {}, {}, {}
+    for cite in self.cites():
+      for d, k in zip([byKey, byGeneratedKey, byCompareAuthorTitle],
+                      [cite.key, cite.makeKey(), cite.compareAuthorTitle()]):
+        if k not in d.keys():
+          d[k] = []
+        d[k].append(cite)
+    return [ [c for c in d.values() if len(c)>1]
+                    for d in (byKey, byGeneratedKey, byCompareAuthorTitle) ]
+
+  
+  def duplicatesKeys(self):
+    return self._duplicates()[0]
+
+
+  def duplicatesGeneratedKeys(self):
+    return self._duplicates()[1]
+
+
+  def duplicatesAuthorTitle(self):
+    return self._duplicates()[2]
+
+
   def addCites(self, cites):
     if cites:
       with open(self.path, 'a') as f:

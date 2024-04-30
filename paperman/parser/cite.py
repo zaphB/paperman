@@ -295,6 +295,7 @@ class Cite:
       fieldsStr = f',\n{fieldsStr[:-2]}\n'
     return f'@{self.section}{{{self.key}'+fieldsStr+'}'
 
+
   def makeKey(self):
     res = []
     author, title, year = [self.get(k) for k in 'author title year'.split()]
@@ -310,7 +311,8 @@ class Cite:
     title = re.sub(r'[^a-z0-9\s]+', '', unidecode.unidecode(title).lower())
     if title:
       segments = [s.strip() for s in title.split() 
-                      if s.strip() and s not in ('in', 'of', 'for', 'by', 'the', 'and', 'a', 'on')]
+                    if s.strip() and s not in (
+                        'in', 'of', 'for', 'by', 'the', 'and', 'a', 'on')]
       res.extend(segments[:2])
 
     # add year
@@ -319,6 +321,7 @@ class Cite:
       res.append(year)
 
     return '-'.join(res)
+
 
   def pretty(self):
     fieldsStr = ''
