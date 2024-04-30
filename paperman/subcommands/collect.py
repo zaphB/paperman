@@ -7,31 +7,6 @@ from .. import parser
 from . common import *
 
 
-def makeKey(author, title, year):
-  res = []
-
-  # add first author's lastname
-  author = re.sub(r'[^a-z0-9,\s]+', '', unidecode.unidecode(author).lower())
-  if author:
-    firstAuthor = author.split('and')[0]
-    lastName = firstAuthor.split(',')[0].split()[-1]
-    res.append(lastName.lower())
-
-  # add title
-  title = re.sub(r'[^a-z0-9\s]+', '', unidecode.unidecode(title).lower())
-  if title:
-    segments = [s.strip() for s in title.split() 
-                    if s.strip() and s not in ('in', 'of', 'for', 'by', 'the', 'and', 'a', 'on')]
-    res.extend(segments[:2])
-
-  # add year
-  year = re.sub(r'[^a-z0-9\s]+', '', unidecode.unidecode(year).lower())
-  if year:
-    res.append(year)
-
-  return '-'.join(res)
-
-
 def main(args):
   # check of library path is set
   libraryPath = os.path.expanduser(cfg.get('library_path'))
@@ -111,41 +86,33 @@ def main(args):
             # run pretty method to clean up fields and trigger potential reformatting questions
             cite.pretty()
 
-            author = cite['author']
-            fullTitle = cite['title']
-            year = cite['year']
-            if author and fullTitle and year:
-              # generate key and filename from paper title
-              key = makeKey(author, fullTitle, year)
-              cite.key = key
-              libraryDir = os.path.join(libraryPath,
-                                        time.strftime(cfg.get('library_folder_pattern')))
-              target = os.path.join(libraryDir, key)
-              os.makedirs(os.path.dirname(target), exist_ok=True)
-              if not any([f.startswith(target)
-                              for f in os.listdir(os.path.dirname(target))]):
-                targetName = target+'.'+cfg.get('bibtex_extensions')[0]
-                try:
-                  with open(targetName, 'w') as f:
-                    f.write(cite.pretty()+'\n')
-                except Exception:
-                  if os.path.exists(targetName):
-                    os.remove(targetName)
-                  raise
-                os.remove(bibPath)
-                #io.info(f'moved "{bibPath}" -> "{target}.{cfg.get("bibtex_extensions")[0]}"')
-                shutil.move(pdfPath, target+'.pdf')
-                #io.info(f'moved "{pdfPath}" -> "{target}.pdf"')
-                io.info(f'imported "{cite.key}"')
+            # generate key and filename from paper title
+            cite.key = cite.makeKey()
+            libraryDir = os.path.join(libraryPath,
+                                      time.strftime(cfg.get('library_folder_pattern')))
+            target = os.path.join(libraryDir, cite.key)
+            os.makedirs(os.path.dirname(target), exist_ok=True)
+            if not any([f.startswith(target)
+                            for f in os.listdir(os.path.dirname(target))]):
+              targetName = target+'.'+cfg.get('bibtex_extensions')[0]
+              try:
+                with open(targetName, 'w') as f:
+                  f.write(cite.pretty()+'\n')
+              except Exception:
+                if os.path.exists(targetName):
+                  os.remove(targetName)
+                raise
+              os.remove(bibPath)
+              #io.info(f'moved "{bibPath}" -> "{target}.{cfg.get("bibtex_extensions")[0]}"')
+              shutil.move(pdfPath, target+'.pdf')
+              #io.info(f'moved "{pdfPath}" -> "{target}.pdf"')
+              io.info(f'imported "{cite.key}"')
 
-                # reset lastErr memory
-                lastErrStr = ''
-              else:
-                onError(pdfPath, 'failed to move files to library, target',
-                        '"'+target+'"', 'already exists')
-
+              # reset lastErr memory
+              lastErrStr = ''
             else:
-              onError(pdfPath, 'bib file does not contain author, title or year')
+              onError(pdfPath, 'failed to move files to library, target',
+                      '"'+target+'"', 'already exists')
 
           else:
             onError(pdfPath, f'found unexpected citation count ({len(cites)}) in bib file')
