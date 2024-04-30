@@ -363,7 +363,7 @@ class TexFile:
       # find double words
       _l = re.sub(r'\s+', ' ', l.replace(',', '').replace('.', ''))
       for w1, w2 in zip(_l.split()[:-1], _l.split()[1:]):
-        if w1 == w2:
+        if w1 == w2 and re.match(r'[a-zA-Z0-9]', w1):
           yield (self.path, ln,
                  f'found duplicate word "{w1}"')
 
