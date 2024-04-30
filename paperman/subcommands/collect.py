@@ -11,19 +11,21 @@ def makeKey(author, title, year):
   res = []
 
   # add first author's lastname
+  author = re.sub(r'[^a-z0-9,\s]+', '', unidecode.unidecode(author).lower())
   if author:
     firstAuthor = author.split('and')[0]
     lastName = firstAuthor.split(',')[0].split()[-1]
     res.append(lastName.lower())
 
   # add title
+  title = re.sub(r'[^a-z0-9\s]+', '', unidecode.unidecode(title).lower())
   if title:
-    title = re.sub("[^a-z0-9 ]+", "", unidecode.unidecode(title).lower())
     segments = [s.strip() for s in title.split() 
                     if s.strip() and s not in ('in', 'of', 'for', 'by', 'the', 'and', 'a', 'on')]
     res.extend(segments[:2])
 
   # add year
+  year = re.sub(r'[^a-z0-9\s]+', '', unidecode.unidecode(year).lower())
   if year:
     res.append(year)
 
@@ -87,6 +89,7 @@ def main(args):
 
           # load and parse bib file (retry five times in case bib file was not
           # completely written when it was initially discovered)
+          cites = []
           for _ in range(5):
             try:
               if bibPath.lower().endswith('.ris'):
@@ -98,19 +101,19 @@ def main(args):
               if len(cites) != 1:
                 raise ValueError('invalid number of citations in bib file')
               break
-            except KeyboardInterrupt:
-              raise
-            except:
+            except Exception:
               time.sleep(.1)
 
           io.dbg('cites:', cites)
           if len(cites) == 1:
             cite = cites[0]
 
+            # run pretty method to clean up fields and trigger potential reformatting questions
+            cite.pretty()
+
             author = cite['author']
             fullTitle = cite['title']
             year = cite['year']
-
             if author and fullTitle and year:
               # generate key and filename from paper title
               key = makeKey(author, fullTitle, year)
@@ -125,7 +128,7 @@ def main(args):
                 try:
                   with open(targetName, 'w') as f:
                     f.write(cite.pretty()+'\n')
-                except:
+                except Exception:
                   if os.path.exists(targetName):
                     os.remove(targetName)
                   raise

@@ -242,9 +242,13 @@ class Cite:
 
     # if limited by { and } or ", strip those
     f = self.fields[k]
-    p = self.fieldsParseInfo.get(k, {})
-    if p and p['opens'] and p['closes']:
-      return k, f[p['opens'][0]+1:p['closes'][-1]]
+    while (( f.strip().startswith('{') 
+              and f.strip().endswith('}') )
+        or ( f.strip().startswith('"') 
+              and f.strip().endswith('"') ) ):
+      f = f.strip()[1:-1]
+
+    # return key and result
     return k, f
 
 
@@ -325,7 +329,6 @@ class Cite:
           else:
             io.warn(f'citation {self.key} has {err}')
 
-
       # check if doi is valid if connected to the internet and doi present
       doi = self['doi']
       if (cfg.get('bib_repair', 'verify_doi_exists')
@@ -337,7 +340,6 @@ class Cite:
             io.dbg(f'citation {self.key} has {err}')
           else:
             io.warn(f'citation {self.key} has {err}')
-
 
       # reformat pages field if exists
       pages = self['pages']
