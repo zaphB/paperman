@@ -67,9 +67,7 @@ def main(args):
         if search:
           try:
             c = parser.BibFile(path).cites()[0]
-          except KeyboardInterrupt:
-            raise
-          except:
+          except Exception:
             io.verb(f'skipping invalid library entry {path}')
           else:
             if all([any([s.lower() in v.lower()
@@ -81,9 +79,7 @@ def main(args):
         if scan:
           try:
             c = parser.BibFile(path).cites()[0]
-          except KeyboardInterrupt:
-            raise
-          except:
+          except Exception:
             invalidBibFiles.append(path)
           else:
             # add to duplicate keys dict

@@ -1,22 +1,33 @@
 import re
 import time
 import shutil
+import unidecode
 
 from .. import parser
 from . common import *
 
 
-def makeKey(string, maxTotLen, maxSegLen):
-  res = ""
-  for s in re.sub("[^a-z0-9 ]+", "", string.lower()).split():
-    s = s.lower().strip()
-    if len(res)+len(s[:maxSegLen])+1 > maxTotLen:
-      break
-    elif res == "":
-      res += s[:maxSegLen]
-    else:
-      res += "-"+s[:maxSegLen]
-  return res
+def makeKey(author, title, year):
+  res = []
+
+  # add first author's lastname
+  if author:
+    firstAuthor = author.split('and')[0]
+    lastName = firstAuthor.split(',')[0].split()[-1]
+    res.append(lastName.lower())
+
+  # add title
+  if title:
+    title = re.sub("[^a-z0-9 ]+", "", unidecode.unidecode(title).lower())
+    segments = [s.strip() for s in title.split() 
+                    if s.strip() and s not in ('in', 'of', 'for', 'by', 'the', 'and', 'a', 'on')]
+    res.extend(segments[:2])
+
+  # add year
+  if year:
+    res.append(year)
+
+  return '-'.join(res)
 
 
 def main(args):
@@ -96,19 +107,17 @@ def main(args):
           if len(cites) == 1:
             cite = cites[0]
 
+            author = cite['author']
             fullTitle = cite['title']
-            if fullTitle:
+            year = cite['year']
 
+            if author and fullTitle and year:
               # generate key and filename from paper title
-              libraryName = makeKey(fullTitle,
-                                    cfg.get('library_max_filename_len'),
-                                    cfg.get('library_max_filename_segment_len'))
-              cite.key = makeKey(fullTitle,
-                                 cfg.get('library_max_key_len'),
-                                 cfg.get('library_max_key_segment_len'))
+              key = makeKey(author, fullTitle, year)
+              cite.key = key
               libraryDir = os.path.join(libraryPath,
                                         time.strftime(cfg.get('library_folder_pattern')))
-              target = os.path.join(libraryDir, libraryName)
+              target = os.path.join(libraryDir, key)
               os.makedirs(os.path.dirname(target), exist_ok=True)
               if not any([f.startswith(target)
                               for f in os.listdir(os.path.dirname(target))]):
@@ -133,7 +142,7 @@ def main(args):
                         '"'+target+'"', 'already exists')
 
             else:
-              onError(pdfPath, 'failed to find title in bib file')
+              onError(pdfPath, 'bib file does not contain author, title or year')
 
           else:
             onError(pdfPath, f'found unexpected citation count ({len(cites)}) in bib file')

@@ -46,7 +46,7 @@ setup(name='paperman',
         ],
         'gui_scripts': []
       },
-      install_requires=['appdirs', 'argparse', 'argcomplete', 'pyyaml', 'cloudscraper'],
+      install_requires=['appdirs', 'argparse', 'argcomplete', 'pyyaml', 'cloudscraper', 'unidecode'],
       cmdclass={
         'install': PostInstall
       }
