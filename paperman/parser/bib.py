@@ -446,3 +446,18 @@ class BibFile:
     res = BibFile('')
     res._content = bibStr
     return res
+
+
+  def lint(self, visited=[]):
+    # report duplicates
+    for duplicates in self.duplicatesKeys():
+      yield (self.path, '?', f'found bib entries with duplicate '
+                f'key {duplicates[0].key}')
+
+    for duplicates in self.duplicatesGeneratedKeys():
+      yield (self.path, '?', f'found bib entries with conflicting generated '
+                f'keys:\n{", ".join([d.key for d in duplicates])}')
+
+    for duplicates in self.duplicatesAuthorTitle():
+      yield (self.path, '?', f'found bib entries with identical authors and title:\n'
+                f'{", ".join([d.key for d in duplicates])}')

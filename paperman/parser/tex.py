@@ -262,11 +262,20 @@ class TexFile:
 
   @utils.cacheReturnValue
   def lint(self, visited=[]):
+
+    # lint included files
     for i in self.includes():
       if i not in visited:
         for l in i.lint(visited=visited):
           yield l
         visited.append(i)
+
+    # lint included bib files
+    for b in self.bibs():
+      if b not in visited:
+        for l in b.lint(visited=visited):
+          yield l
+        visited.append(b)
 
     # detect author entries and check whether they exist in whitelist
     authorPattern = r'([^\n]*)\\author\{([^}]*)\}([^\n]*)'

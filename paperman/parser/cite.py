@@ -2,6 +2,7 @@ import re
 import requests
 import cloudscraper
 import time
+import unidecode
 
 from .. import io
 from .. import cfg
@@ -298,7 +299,7 @@ class Cite:
 
   def makeKey(self):
     res = []
-    author, title, year = [self.get(k) for k in 'author title year'.split()]
+    author, title, year = [self.get(k, '') for k in 'author title year'.split()]
 
     # add first author's lastname
     author = re.sub(r'[^a-z0-9,\s]+', '', unidecode.unidecode(author).lower())

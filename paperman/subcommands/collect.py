@@ -1,7 +1,6 @@
 import re
 import time
 import shutil
-import unidecode
 
 from .. import parser
 from . common import *
