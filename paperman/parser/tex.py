@@ -295,7 +295,7 @@ class TexFile:
           knownAuthors = knownAuthors+[authorName]
           cfg.set('lint', 'known_authors', knownAuthors)
         else:
-          yield (self.path, nan,
+          yield (self.path, '?',
                  f'author name {authorName} is not in known_authors list')
 
 
