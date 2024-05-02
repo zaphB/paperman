@@ -140,7 +140,7 @@ def main(args):
   if search or fulltextSearch:
     if not matches:
       io.info('no matches')
-    for m in matches:
+    for m in sorted(matches):
       bibPath = None
       for ext in cfg.get('bibtex_extensions'):
         _bibPath = utils.replaceSuffix(m, ext)
