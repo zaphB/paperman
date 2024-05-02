@@ -62,7 +62,7 @@ def byName(name):
 
 
 def getOrAsk(jour=None, descr=None):
-  # check if journal exists in db
+  # check if journal exists in db and return immediately if the case
   k, v = byName(jour)
   if k and v:
     return k, v
@@ -70,6 +70,10 @@ def getOrAsk(jour=None, descr=None):
   k, v = byAbbr(jour)
   if k and v:
     return k, v
+
+  # init result variable and flag deciding whether to add entry to db
+  addToDb = False
+  result = None
 
   # else show full bibinfo
   if descr:
@@ -80,11 +84,13 @@ def getOrAsk(jour=None, descr=None):
   options = [m[1] for m in matches[:9]] + ['<manually enter journal>']
   
   # suggest generated abbreviation if pyiso4 is available
+  hasAutoAbbrev = False
   try:
     import pyiso4.ltwa
     autoAbbrev = pyiso4.ltwa.Abbreviate.create()(jour)
     matches = [(autoAbbrev, jour)] + matches
     options = ['<guessed abbreviation: '+autoAbbrev+'>'] + options
+    hasAutoAbbrev = True
   except ImportError:
     pass  
 
@@ -93,13 +99,21 @@ def getOrAsk(jour=None, descr=None):
                      f'if this journal is among one of the following\n'
                      f'similar journals select it, else select to\n'
                      f'manually enter journal details', options)
+
+    # one of the existing journals was selected
     if i < len(options)-1:
-      return matches[i]
+      result = matches[i]
+
+      # in case the auto-abbreviation example was selected, make sure it is 
+      # added to the db in the end
+      if hasAutoAbbrev and i == 0:
+        addToDb = True
 
   else:
     io.info(f'journal {repr(jour)} not found in database')
 
-  while True:
+  while result is None:
+
     io.info('please enter full name of the journal:')
     while True:
       full = input().strip()
@@ -127,13 +141,19 @@ def getOrAsk(jour=None, descr=None):
                f'the correct ISO4 abbreviated name is',
                repr(abbr),
                f'is this correct?'):
-      break
+      result = (abbr,full)
+  
+  # if flag was set: add journal to db and reload
+  print(result, addToDb)
   if addToDb:
+    abbr, full = result
     cfgJournals = cfg.get('z_bib_journals')
     cfgJournals[abbr] = full
     cfg.set('z_bib_journals', cfgJournals)
     journals(forceRegen=True)
-  return byName(full)
+  
+  # return result
+  return result
 
 
 def printSuspicious():
@@ -155,6 +175,7 @@ _JOURNALS = None
 _KEYS = None
 _LKEYS = None
 _LNAMES = None
+
 
 def journals(forceRegen=False):
   global _JOURNALS, _KEYS, _LKEYS, _LNAMES
