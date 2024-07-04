@@ -61,9 +61,9 @@ def _indentMsg(msg):
   if len(ls) == 1:
     return ls[0]
   elif len(ls) == 2:
-    return ls[0]+'\n'+' '*2+'\ '+ls[1]
+    return ls[0]+'\n'+' '*2+r'\ '+ls[1]
   else:
-    return ('\n'+' '*2+'| ').join(ls[:-1])+'\n'+' '*2+'\ '+ls[-1]
+    return ('\n'+' '*2+'| ').join(ls[:-1])+'\n'+' '*2+r'\ '+ls[-1]
 
 
 def err(*msg, logOnly=False):

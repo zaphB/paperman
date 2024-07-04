@@ -65,6 +65,7 @@ def main():
   s = sub.add_parser('input',
                      help=r'input helper: check if all \input{} files exist '
                           r'or import files')
+  addTexFileArg(s)
   addVerboseArg(s)
   s.add_argument('-i', '--import', action='store_true',
                  help=r'try importing missing \input{} files from input '
@@ -74,6 +75,7 @@ def main():
   s = sub.add_parser('import-all',
                      help='shortcut to run img, bib and input subcommands '
                           'with --import option enabled')
+  addTexFileArg(s)
   addVerboseArg(s)
 
   # sort authors command
