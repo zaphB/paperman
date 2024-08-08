@@ -160,6 +160,8 @@ def main():
                       'git repository)')
   s.add_argument('-o', '--outfile', nargs='?', default='diff.pdf',
                  help='name of the pdf file to be built')
+  s.add_argument('-k', '--keep', action='store_true',
+                 help='keep build files build files')
   s.add_argument('-c', '--clean', action='store_true',
                  help='remove all build files except for output pdf')
   s.add_argument('old', help='filename of old version')
