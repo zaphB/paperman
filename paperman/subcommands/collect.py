@@ -57,7 +57,8 @@ def main(args):
                 'found pdf candidates: ', *(pdfs or ['-none-']),
                 'found bib candidates: ', *(bibs or ['-none-']))
 
-        if len(pdfs) == 1 and len(bibs) == 1:
+        # if exactly one non-empty pdf and one bib file exist, trigger collect
+        if len(pdfs) == 1 and len(bibs) == 1 and os.path.getsize(pdfs[0]) > 16 and os.path.getsize(bibs[0]) > 16:
           pdfPath = pdfs[0]
           bibPath = bibs[0]
 
