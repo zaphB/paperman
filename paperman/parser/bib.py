@@ -449,7 +449,6 @@ class BibFile:
 
         # join lines not beginning with two capital letters and a hyphen to previous line
         elif not re.match(r'[A-Z0-9][A-Z0-9]\s*-', line):
-          print(f'joining {line} to key {prevKey}')
           if prevKey not in entries.keys():
             raise ValueError(f'unexpected line in ris file: {line}')
           if prevKey == 'authors':
