@@ -404,31 +404,59 @@ class BibFile:
     entries['authors']=list()
 
     with open(risFile) as f:
+      prevKey = None
       for line in f:
+        if not line.strip():
+          continue
+
+        # lines beginning with two capital letters correspond to bibtex fields
         if re.match("PY",line):
+          prevKey = 'year'
           entries['year'] = line[6:10]
         elif re.match("AU",line):
+          prevKey = 'authors'
           entries['authors'].append(line[6:-1])
         elif re.match("VL",line):
+          prevKey = 'volume'
           entries['volume'] = line[6:-1]
         elif re.match("TI",line):
+          prevKey = 'title'
           entries['title'] = line[6:-1]
         elif re.match("T1",line):
+          prevKey = 'title'
           entries['title'] = line[6:-1]
         elif re.match("JO",line):
+          prevKey = 'journal'
           entries['journal'] = line[6:-1]
         elif re.match("IS",line):
+          prevKey = 'number'
           entries['number'] = line[6:-1]
         elif re.match("SP",line):
+          prevKey = 'startpage'
           entries['startpage'] = line[6:-1]
         elif re.match("EP",line):
+          prevKey = 'endpage'
           entries['endpage'] = line[6:-1]
         elif re.match("SN",line):
+          prevKey = 'isbn'
           entries['isbn'] = line[6:-1]
         elif re.match("AB",line):
+          prevKey = 'abstract'
           entries['abstract'] = line[6:-1]
         elif re.match("UR",line):
+          prevKey = 'url'
           entries['url'] = line[6:-1]
+
+        # join lines not beginning with two capital letters and a hyphen to previous line
+        elif not re.match(r'[A-Z0-9][A-Z0-9]\s*-', line):
+          print(f'joining {line} to key {prevKey}')
+          if prevKey not in entries.keys():
+            raise ValueError(f'unexpected line in ris file: {line}')
+          if prevKey == 'authors':
+            entries[prevKey][-1] += ' '+line
+          else:
+            entries[prevKey] += ' '+line
+
 
     bibStr = ('@article{' + key + ',\n'
                   + 'author={' + (" and ".join(entries['authors'])) + '},\n'

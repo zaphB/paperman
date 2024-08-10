@@ -303,6 +303,7 @@ class Cite:
 
     # add first author's lastname
     author = re.sub(r'[^a-z0-9,\s]+', '', unidecode.unidecode(author).lower())
+    author = re.sub(r'\s+', ' ', author)
     if author:
       firstAuthor = author.split('and')[0]
       lastName = firstAuthor.split(',')[0].split()[-1]
