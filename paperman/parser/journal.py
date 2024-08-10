@@ -144,7 +144,6 @@ def getOrAsk(jour=None, descr=None):
       result = (abbr,full)
   
   # if flag was set: add journal to db and reload
-  print(result, addToDb)
   if addToDb:
     abbr, full = result
     cfgJournals = cfg.get('z_bib_journals')

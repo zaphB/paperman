@@ -37,7 +37,7 @@ If the [pyiso4](https://github.com/pierre-24/pyiso4) package is installed, paper
 
 All functionality is available through the `paperman` shell command, which has a number of subcommands. Use `paperman --help` or `paperman <subcommand> --help` for instructions on how to use possible options and parameters.
 
-The behavior of paperman is controlled by its config file, which is a yaml formatted plain text file found at `~/.config/paperman/paperman.conf` on Linux systems. Feel free to adjust the config according to your needs. Deleting an entry restores the default value on the next run of paperman.
+The behavior of paperman is controlled by its config file, which is a yaml formatted plain text file found at `~/.config/paperman/paperman.conf` on linux systems. Feel free to adjust the config according to your needs. Deleting an entry restores the default value on the next run of paperman.
 
 
 ## Managing a human-readable, searchable library for .pdf and .bib files
@@ -47,7 +47,7 @@ Paperman is capable of collecting and sorting pdf and bibliography data of liter
 
 ### `paperman collect`
 
-This subcommand scans the folders given by the `library_collect_paths` (defaults to '~/Desktop' and '~/Downloads') in the config for pairs of pdf and bibliography files. If exactly one pdf and exactly one bibtex, or .ris bibliography file is found in one of the folders, the pair of files is moved to the library at `library_path` (defaults to '~/Documents/bibliography'). Paperman creates subfolders in `library_path` which are named after the `library_folder_pattern` (defaults to '%Y-%m'), which must be a valid format string to use with python's `time.strftime(...)`. The time used to generate the folder name is the current time during the import, such you can later easily see from the folder structure which papers you added in which period of time.
+This subcommand scans the folders given by the `library_collect_paths` (defaults to '\~/Desktop' and '\~/Downloads') in the config for pairs of pdf and bibliography files. If exactly one pdf and exactly one bibtex, or .ris bibliography file is found in one of the folders, the pair of files is moved to the library at `library_path` (defaults to '\~/Documents/bibliography'). Paperman creates subfolders in `library_path` which are named after the `library_folder_pattern` (defaults to '%Y-%m'), which must be a valid format string to use with python's `time.strftime(...)`. The time used to generate the folder name is the current time during the import, such you can later easily see from the folder structure which papers you added in which period of time.
 
 
 ### `paperman lib`
@@ -57,7 +57,7 @@ Without any options, `paperman lib` reports the status of your library, given by
 
 ### `paperman journal`
 
-Paperman maintains a list of journal full names and their abbreviations. This list is populated with journals from [this database](https://www.cas.org/support/documentation/references/corejournals) and is automatically extended if previously unknown journals appear in newly added papers. The command `paperman journal` lists all known journals. The command `paperman journal <query>` lists all journals that match the query. By default both abbreviation and full journal name are displayed. The `-f` and `-a` options change this behavior to only display abbreviated or full names.
+Paperman maintains a list of journal full names and their abbreviations. This list is initially populated with journals from [this database](https://www.cas.org/support/documentation/references/corejournals) and is automatically extended if previously unknown journals appear in newly added papers. The command `paperman journal` lists all known journals. The command `paperman journal <query>` lists all journals that match the query. By default both abbreviation and full journal name are displayed. The `-f` and `-a` options change this behavior to only display abbreviated or full names.
 
 
 ### `paperman sync`
@@ -71,11 +71,11 @@ Paperman interprets any tex file in subfolders of the current directory that con
 
 ### `paperman img`
 
-This subcommand lists missing and unused images of the current latex project. Only images directly included with the `\includegraphics{}` command are detected by paperman. The command `paperman img -i` automatically imports missing images, if it finds files with matching filenames on the paths given by `img_search_paths` (defaults to '~/Documents') in the config file. If multiple images are found, the setting `img_search_priority` (defaults to 'path-order, newest') can be a string containing 'newest', 'oldest' and 'path-order', to define how files are prioritized. Paperman prefers to store all images of a latex project in one subfolder of the project. This folder name can be configured with `img_dir_name` (defaults to 'img').
+This subcommand lists missing and unused images of the current latex project. Only images directly included with the `\includegraphics{}` command are detected by paperman. The command `paperman img -i` automatically imports missing images, if it finds files with matching filenames on the paths given by `img_search_paths` (defaults to '\~/Documents') in the config file. If multiple images are found, the setting `img_search_priority` (defaults to 'path-order, newest') can be a string containing 'newest', 'oldest' and 'path-order', to define how files are prioritized. Paperman prefers to store all images of a latex project in one subfolder of the project. This folder name can be configured with `img_dir_name` (defaults to 'img').
 
 ### `paperman bib`
 
-This subcommand lists missing and unused citations of the current latex project. Only citations done with commands that contain cite in them, e.g. `\cite{...}`, `\fullcite{...}` or `\citeauthor{...}`, are detected by paperman. `paperman bib -i` automatically adds missing citations to the .bib file of the project if they can be found on the search paths configured by  `bib_search_paths` (defaults to '~/Documents') in the config. The field `bib_search_priority` (defaults to 'path-order, newest') allows defining which entry to prioritize in case of multiple found citations, analogous to the `img` subcommand.
+This subcommand lists missing and unused citations of the current latex project. Only citations done with commands that contain cite in them, e.g. `\cite{...}`, `\fullcite{...}` or `\citeauthor{...}`, are detected by paperman. `paperman bib -i` automatically adds missing citations to the .bib file of the project if they can be found on the search paths configured by  `bib_search_paths` (defaults to '\~/Documents') in the config. The field `bib_search_priority` (defaults to 'path-order, newest') allows defining which entry to prioritize in case of multiple found citations, analogous to the `img` subcommand.
 
 The `bib_repair` config section contains a number of automatic fixes for bibtex files, as automatic journal name abbreviation/full name conversion, autogenerating a 'url' field if a 'doi' field is given, converting the pages field to contain only the beginning of the range, checking the capitalization of titles, and many more. Each repair rule can be switched on and off. The command `paperman bib -r` completely rewrites the current project's bibtex files and applies the repair rules to all entries.
 
@@ -83,7 +83,7 @@ If paperman is unsure if the forced capitalization of a title via additional `{.
 
 ### `paperman input`
 
-This subcommand lists missing files in the current latex project which are required with the `\input{...}` command. Missing files can be automatically imported with `paperman input -i`. The search path for missing files is given by `input_search_paths` (defaults to '~/Documents') in the config, the search priority is given by `input_search_priority` (defaults to 'path-order, newest').
+This subcommand lists missing files in the current latex project which are required with the `\input{...}` command. Missing files can be automatically imported with `paperman input -i`. The search path for missing files is given by `input_search_paths` (defaults to '\~/Documents') in the config, the search priority is given by `input_search_priority` (defaults to 'path-order, newest').
 
 ### `paperman import-all`
 
@@ -112,7 +112,7 @@ Paperman is capable of scanning the tex files in your projects and reports suspi
 
 ### `paperman lint`
 
-Like the other project related subcommands, `paperman lint` without arguments scans the entire project at the current location. Optionally, the path to a topleven file can be specified as an argument.
+Like the other project related subcommands, `paperman lint` without arguments scans the entire project at the current location. Optionally, the path to a toplevel file can be specified as an argument.
 
 
 ## Cleaning latex build files
@@ -121,4 +121,4 @@ The countless build files generated by latex pollute latex project directories, 
 
 ### `paperman clean`
 
-This subcommand crawls recursively through the subfolders of the current directory and moves all files that look like latex build files to a trash folder `clean.trash_folder` (defaults to '~/Desktop/paperman-trash'). `clean.ignore_paths` specifies a list of paths that `paperman clean` will never recurse into. Any directory that contains files with all suffixes listed in `clean.required_suffs` is considered a latex directory and all files ending with suffixes `clean.clean_suffs` will be removed. This subcommand skips any directory that starts with a dot.
+This subcommand crawls recursively through the subfolders of the current directory and moves all files that look like latex build files to a trash folder `clean.trash_folder` (defaults to '\~/Desktop/paperman-trash'). `clean.ignore_paths` specifies a list of paths that `paperman clean` will never recurse into. Any directory that contains files with all suffixes listed in `clean.required_suffs` is considered a latex directory and all files ending with suffixes `clean.clean_suffs` will be removed. This subcommand skips any directory that starts with a dot.
