@@ -1,5 +1,15 @@
 from .common import *
 
+p = lambda d: os.path.realpath(os.path.expanduser(d))
+trashFolder = p(cfg.get('clean', 'trash_folder'))
+baseDirectory = p('.')
+
+def stripBaseDir(p):
+  if p.startswith(baseDirectory):
+    return p[len(baseDirectory):]
+  return p
+
+
 def main(args):
   proj = detectProj(args)
   if proj is None:
@@ -10,6 +20,17 @@ def main(args):
     io.info('detected unused image files:', *sorted(unused))
   else:
     io.info('no unused image files')
+
+  if unused and args.clean:
+    if io.conf('move all unused images to paperman trash?', default=True):
+      for img in unused:
+        absPath, path = img.path, stripBaseDir(img.path)
+        baseFolder = time.strftime('%Y-%m-%d')
+        absMoveTo = os.path.realpath(f'{trashFolder}/{baseFolder}/{path}')
+        io.info(f'{stripBaseDir(absPath)} -> {stripBaseDir(absMoveTo)}')
+        os.makedirs(os.path.dirname(absMoveTo), exist_ok=True)
+        shutil.move(absPath, absMoveTo)
+    io.info('all done.')
 
   missing = proj.missingIncludedImgs()
   if missing:

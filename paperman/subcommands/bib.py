@@ -23,9 +23,9 @@ def main(args):
   importMissing = False
   if getattr(args, 'import'):
     importMissing = True
-  rewrite = args.rewrite or args.sort is not False
+  rewrite = args.rewrite or args.sort or args.clean
   sortKey = None
-  if args.sort is False:
+  if not args.sort:
     pass
   elif args.sort == 'key' or args.sort is None:
     sortKey = lambda c: c.key
@@ -113,9 +113,21 @@ def main(args):
 
   # go trough all toplevel files and apply actions
   if rewrite and not importMissing:
+    io.info('rewriting bib file(s)...')
     for t in proj.toplevel():
       for bib in t.bibs():
+
+        # create list of all existing cites to manipulate on
         newCites = bib.cites()
+
+        # remove unused citations if requested
+        if unused and args.clean:
+          if io.conf(f'remove all unused entries from bib file {bib.path}?', default=True):
+            newCites = [c for c in newCites if c not in unused]
+
+        # apply sorting scheme if requested
         if sortKey:
           newCites = sorted(newCites, key=sortKey)
+
+        # write new list of citations to disk
         bib.setCites(newCites)

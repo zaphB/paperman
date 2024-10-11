@@ -22,10 +22,8 @@ class ImgFile:
           if self.path is not None:
             break
 
-
   def containsNewcommandArg(self):
     return common.containsNewcommandArg(self.fname)
-
 
   def __eq__(self, img):
     if self.path and img.path:
@@ -33,18 +31,14 @@ class ImgFile:
     return common.filenamesEqual(os.path.basename(self.fname),
                                 os.path.basename(img.fname))
 
-
   def __lt__(self, img):
     return self.path and img.path and self.path < img.path
-
 
   def __gt__(self, img):
     return self.path and img.path and self.path > img.path
 
-
   def exists(self):
     return self.path and os.path.exists(self.path)
-
 
   def __repr__(self):
     return f'img file: {self.path or self.fname}'

@@ -36,8 +36,8 @@ def main():
   addVerboseArg(s)
   s.add_argument('-i', '--import', action='store_true',
                  help='try importing missing images from image search path')
-  #s.add_argument('-c', '--clean', action='store_true',
-  #               help='remove unused images')
+  s.add_argument('-c', '--clean', action='store_true',
+                 help='remove unused images')
 
   # bib command
   s = sub.add_parser('bib', help='bibliography helper: check if unused or '
@@ -52,9 +52,9 @@ def main():
   s.add_argument('-i', '--import', action='store_true',
                  help='try importing missing citations from existing '
                       'bibliographies')
-  #s.add_argument('-c', '--clean', action='store_true',
-  #               help='remove unused citations from bibliography, implies '
-  #                    '--rewrite')
+  s.add_argument('-c', '--clean', action='store_true',
+                 help='remove unused citations from bibliography, implies '
+                      '--rewrite')
   s.add_argument('-r', '--rewrite', action='store_true',
                  help='rewrite and repair entire bibliography')
   s.add_argument('-s', '--sort', nargs='?', default=False,

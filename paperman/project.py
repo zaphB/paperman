@@ -93,7 +93,7 @@ class Project:
 
   @utils.cacheReturnValue
   def allImgFiles(self):
-      return sorted(self._walk(find='imgs'))
+    return sorted(self._walk(find='imgs'))
 
 
   @utils.cacheReturnValue
