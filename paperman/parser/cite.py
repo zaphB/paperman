@@ -1,6 +1,5 @@
 import re
 import requests
-import cloudscraper
 import time
 import unidecode
 
@@ -62,15 +61,6 @@ def isUrlValid(url):
   return f'invalid url: {err}'
 
 
-_cloudscraper = None
-
-def _getScraper():
-  global _cloudscraper
-  if _cloudscraper is None:
-    _cloudscraper = cloudscraper.create_scraper()
-  return _cloudscraper
-
-
 def _isDoiOrUrlValid(url, validCfgListKey, prefix=''):
   url = url.strip()
   try:
@@ -99,17 +89,8 @@ def _isDoiOrUrlValid(url, validCfgListKey, prefix=''):
           if 'cloudflare' in r.text.lower():
             raise ValueError('cloudflare protection')
           raise ValueError(f'status code is {r.status_code}')
-      except KeyboardInterrupt:
-        raise
-      except Exception as _e:
-        try:
-          r = _getScraper().get(prefix+url, timeout=5)
-          if r.status_code//10 != 20:
-            raise ValueError(f'status code is {r.status_code}')
-        except KeyboardInterrupt:
-          raise
-        except Exception as e:
-          result = 'requests: '+str(_e)+', cloudscraper: '+str(e)
+      except Exception as e:
+        result = 'requests: '+str(e)
 
   if not result:
     verified.append((time.time(), url))
