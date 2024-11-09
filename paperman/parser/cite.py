@@ -47,7 +47,7 @@ def _hasNetwork():
 def isDoiValid(doi):
   io.dbg(f'verifying doi {doi}...')
   err = _isDoiOrUrlValid(doi, 'z_verified_dois',
-                          prefix='https://doi.org/')
+                         prefix='https://doi.org/')
   if not err:
     return ''
   return f'invalid doi: {err}'
@@ -67,9 +67,7 @@ def _isDoiOrUrlValid(url, validCfgListKey, prefix=''):
     verified = [(t, u) for t, u in cfg.get(validCfgListKey)
                       if time.time()-t < 30*24*60*60*cfg.get('bib_repair',
                               'doi_and_url_verification_max_age_months')]
-  except KeyboardInterrupt:
-    raise
-  except:
+  except Exception:
     verified = []
 
   # check if in list
@@ -85,7 +83,12 @@ def _isDoiOrUrlValid(url, validCfgListKey, prefix=''):
       io.dbg(f'requesting url {prefix+url}')
       try:
         r = requests.get(prefix+url, timeout=5)
-        if r.status_code//10 != 20:
+        # any 20x code is of course fine. Code 403 forbidden is also fine,
+        # because it usually means that e.g. cloudflare is blocking access 
+        # to robots. In this case we assume the link is fine to add it to
+        # the list of checked links and avoid hitting the cloudflare protection
+        # with our robot requests too often.
+        if r.status_code//10 != 20 and r.status_code != 403:
           if 'cloudflare' in r.text.lower():
             raise ValueError('cloudflare protection')
           raise ValueError(f'status code is {r.status_code}')
