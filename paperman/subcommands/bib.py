@@ -116,6 +116,14 @@ def main(args):
     io.info('rewriting bib file(s)...')
     for t in proj.toplevel():
       for bib in t.bibs():
+        
+        # create backup file of existing bib
+        uniqueName = bib.path+'.bak'
+        i = 0
+        while os.path.exists(uniqueName):
+          i += 1
+          uniqueName = bib.path+f'.{i}.bak'
+        shutil.copy(bib.path, uniqueName)
 
         # create list of all existing cites to manipulate on
         newCites = bib.cites()
@@ -131,3 +139,7 @@ def main(args):
 
         # write new list of citations to disk
         bib.setCites(newCites)
+
+        # offer to delete backup bib
+        if io.conf(f'delete copy of old bib file {uniqueName}?', default=False):
+          os.remove(uniqueName)

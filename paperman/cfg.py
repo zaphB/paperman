@@ -41,8 +41,8 @@ _DEFAULT_CFG = dict(
     trash_folder = '~/Desktop/paperman-trash',
     ignore_paths = [],
     required_suffs = ['tex', 'pdf', 'aux'],
-    clean_suffs = ['aux', 'bcf', 'log', 'snm', 'vrb', 'run.xml', 'synctex',
-                   'nav', 'blg', 'fls', 'fdb_latexmk', 'toc', 'tdo', 'out']
+    clean_suffs = ['aux', 'bcf', 'log', 'snm', 'vrb', 'run.xml', 'synctex', 'nav',
+                   'blg', 'fls', 'fdb_latexmk', 'toc', 'tdo', 'out', 'bak']
   ),
   lint=dict(
     avoid_commands_in_toplevel=[],
