@@ -4,7 +4,7 @@ from setuptools import setup
 from setuptools.command.install import install
 
 # DO NOT CHANGE: this line will be replaced by ./dev/update-setup.py
-version = '1.0.8+hf4263e6'
+version = '1.0.9'
 
 # if setup is run in project dir, update version number
 try:
