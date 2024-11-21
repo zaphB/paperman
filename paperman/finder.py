@@ -84,7 +84,7 @@ def importImgs(imgs, imgDir):
     # append unedited path
     searchPaths.append(p)
 
-    # if no **-globb pattern detected, add standard one and add to list
+    # if no **-glob pattern detected, add standard one and add to list
     if '*' not in p:
       searchPaths.append(os.path.join(p, '**', cfg.get('img_dir_name')))
 
@@ -104,7 +104,14 @@ def importImgs(imgs, imgDir):
     rules = cfg.get('img_search_priority').split()
     sortedCandidates = sorted(candidates, key=_candidateSortKey(rules))
     io.dbg(f'first ten matching candidates sorted by {rules}:', sortedCandidates[:10])
-    _, bestMatch = sortedCandidates[0]
+
+    # if there is a pdf under the first five candidates, prefer the pdf
+    for _, c in sortedCandidates[:5]:
+      if c.lower().endswith('.pdf'):
+        bestMatch = c
+        break
+    else:
+      _, bestMatch = sortedCandidates[0]
 
     # copy best match to desired location
     os.makedirs(imgDir, exist_ok=True)
