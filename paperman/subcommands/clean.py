@@ -33,9 +33,13 @@ def main(args):
       else:
         i += 1
     if (all([any(['.'+rs in f for f in files]) for rs in requiredSuffs])
-        and not any([root.startswith(ip) for ip in ignorePaths])):
+        and not any([root.startswith(ip) for ip in ignorePaths])
+        and ( not args.only_old
+              or all([ time.time()-os.stat(f'{root}/{f}').st_mtime > 30*24*60*60 
+                          for f in files if any([ f.lower().endswith('.'+cs) 
+                                                    for cs in cleanSuffs ]) ]) ) ):
       m.extend([f'{root}/{f}' for f in files
-                        if any(['.'+cs in f for cs in cleanSuffs])])
+                        if any([f.lower().endswith('.'+cs) for cs in cleanSuffs])])
 
   if len(m):
     io.info('found build files:', *m)

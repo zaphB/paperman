@@ -194,6 +194,9 @@ def main():
   s = sub.add_parser('clean',
                      help='recurse into subfolders of current directory and '
                           'remove latex build files')
+  s.add_argument('-o', '--only-old', action='store_true',
+                 help='only clean if build files have not changed since '
+                      'more than one month')
   addVerboseArg(s)
 
   # config subcommand
