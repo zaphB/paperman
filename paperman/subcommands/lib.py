@@ -17,9 +17,7 @@ def main(args):
   if fulltextSearch:
     try:
       subprocess.run(['pdf2txt', '-h'], capture_output=True)
-    except KeyboardInterrupt:
-      raise
-    except:
+    except Exception:
       io.err(f'"pdf2txt -h" failed but is required',
              'for fulltext search, is pdf2txt correctly',
              'installed on your path?')
@@ -71,7 +69,7 @@ def main(args):
             io.verb(f'skipping invalid library entry {path}')
           else:
             if all([any([s.lower() in v.lower()
-                                  for v in c.fields.values()])
+                                  for v in [c.key] + list(c.fields.values())])
                                       for s in search]):
               matches.append(path)
 
