@@ -1,0 +1,55 @@
+[build-system]
+requires = ["hatchling", "versioningit"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "versioningit"
+
+[tool.hatch.build.targets.sdist]
+exclude = [
+  "test",
+  "dev",
+  "releases",
+  "dist"
+]
+
+[project]
+name = "paperman"
+dynamic = ["version"]
+dependencies = [
+  "appdirs",
+  "argparse",
+  "argcomplete",
+  "pyyaml",
+  "unidecode",
+  "pyiso4",
+  "numpy",
+]
+requires-python = ">=3.11"
+authors = [
+  {name = "Philipp Bredol", email = "philipp.bredol@rwth-aachen.de"}
+]
+
+description = "latex project and bibliography management utility"
+readme = "README.md"
+license = {file = "LICENSE.txt"}
+
+[project.urls]
+Homepage = "https://github.com/zaphB/paperman"
+Repository = "https://github.com/zaphB/paperman.git"
+
+[dependency-groups]
+dev = [
+  "pytest>=8.3.4",
+  "pytest-monitor",
+  "jupyter",
+  "ipykernel",
+]
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = ["test"]
+
+[project.scripts]
+paperman = "paperman.__main__:main"
