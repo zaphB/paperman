@@ -49,7 +49,7 @@ _DEFAULT_CFG = dict(
     avoid_commands = [],
     avoid_words=[],
     known_authors=[],
-#    check_spelling=[]
+    writing_conventions_path='',
   ),
   library_path = '~/Documents/bibliography',
   library_sync_additional_paths = [],

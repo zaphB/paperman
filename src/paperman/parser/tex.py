@@ -1,5 +1,6 @@
 import re
 import os
+import functools
 
 from .. import io
 from .. import cfg
@@ -280,7 +281,6 @@ class TexFile:
     # detect author entries and check whether they exist in whitelist
     authorPattern = r'([^\n]*)\\author\{([^}]*)\}([^\n]*)'
     knownAuthors = list(cfg.get('lint', 'known_authors'))
-
     for pre, authorName, post in re.findall(authorPattern, self.content(), re.M):
       # skip lines marked as ok:
       textAround = pre + ' ' + post
@@ -298,8 +298,9 @@ class TexFile:
           yield (self.path, '?',
                  f'author name {authorName} is not in known_authors list')
 
-
+    # go through file line by line and lint
     for ln, l in self.enumContent():
+
       # skip lines marked as ok:
       if 'nolint' in l.split() or '%nolint' in l.split():
         continue
@@ -373,7 +374,70 @@ class TexFile:
           yield (self.path, ln,
                  f'found comma before {word}')
 
-      # spellcheck
-      # TODO
+      # detect violations of writing conventions
+      correctWrong, badWords = _parseWritingConventions()
+      for correct, wrong in correctWrong:
+        for w in wrong:
+          if w.lower() in l.lower():
+            yield (self.path, ln,
+                   f'{repr(w)} is listed as wrong in writing conventions,\n'
+                   f'suggested spelling is {repr(correct)}')
+      for badWord, reason in badWords:
+        if badWord.lower() in l.lower():
+          yield (self.path, ln,
+                 f'{repr(badWord)} is listed as a bad word in writing conventions,\n'
+                 f'reason: {reason}')
 
     visited.append(self)
+
+
+@functools.cache
+def _parseWritingConventions():
+  correctWrong = []
+  badWords = []
+
+  path = os.path.expanduser(str(cfg.get('lint', 'writing_conventions_path')))
+  if path:
+    if os.path.exists(path):
+      with open(path) as _f:
+        correctWrongOrder = None
+        isBadWordsSection = False
+        for l in _f.read().split('\n'):
+          try:
+            a, b = l.split('|')
+          except Exception:
+            pass
+          else:
+            # order is unknown, try to find out order or return
+            if correctWrongOrder is None:
+              if 'correct' in a and 'wrong' in b:
+                correctWrongOrder = [0,1]
+              elif 'wrong' in a and 'correct' in b:
+                correctWrongOrder = [1,0]
+
+            # order is known -> identify right/wrong pair
+            else:
+              correctWrong.append([[a,b][correctWrongOrder[0]].strip(), 
+                                   [s.strip() for s in ([a,b][correctWrongOrder[1]]).split(',')] ])
+          
+          # handle bad words section
+          if 'bad words' in l.lower() and '#' in l:
+            isBadWordsSection = True
+          if isBadWordsSection and l.strip().startswith('*'):
+            s = [_s.strip() for _s in l.strip()[1:].split(':')]
+            if len(s) > 1:
+              badWord = s[0]
+              explain = ':'.join(s[1:])
+              badWords.append([badWord, explain])
+      
+      # report results if debugging is enabled
+      io.dbg('parsed writing conventions file at',
+             repr(path),
+             f'result: {correctWrong=}, {badWords=}')
+                      
+    # file does not exist but path is set to finite value -> warn
+    else:
+      io.warn(f'lint.writing_conventions_path is set to '
+              f'{repr(path)} in config file but the path does not exist')
+
+    return correctWrong, badWords
