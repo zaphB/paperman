@@ -4,7 +4,7 @@
 cd -P -- "$(dirname -- "${BASH_SOURCE[0]}")/.."
 
 # run unittests
-uv run pytest test/*
+uv run pytest test/*.py
 
 # exit success
 exit 0
