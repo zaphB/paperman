@@ -30,6 +30,9 @@ class TestMain(unittest.TestCase):
     self.assertIn('math should be wrapped in curly braces to avoid', res)
     self.assertIn('is listed as wrong in writing conventions', res)
     self.assertIn('is listed as a bad word in writing conventions', res)    
+    self.assertIn(r"no label exists for reference 'jo'", res)
+    self.assertIn(r"label 'fig:thefigure' is never used in a \ref command", res)
+    self.assertIn(r"found figure environment without \label", res)
 
 if __name__ == '__main__':
   unittest.main()

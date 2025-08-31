@@ -178,8 +178,43 @@ class Project:
 
 
   @utils.cacheReturnValue
+  def allRefs(self):
+    res = []
+    for t in self.toplevel():
+      for r in t.refs():
+        if r not in res:
+          res.append(r)
+    return sorted(res)
+
+
+  @utils.cacheReturnValue
+  def allLabels(self):
+    res = []
+    for t in self.toplevel():
+      for l in t.labels():
+        if l not in res:
+          res.append(l)
+    return sorted(res)
+
+
+  @utils.cacheReturnValue
   def lint(self):
+    # find all labels that are not referenced anywhere
+    unusedLabels = []
+    for l in self.allLabels():
+      if l not in self.allRefs():
+        if l not in unusedLabels:
+          unusedLabels.append(l)
+
+    # find all references for which no labels were found
+    brokenRefs = []
+    for r in self.allRefs():
+      if r not in self.allLabels():
+        if r not in brokenRefs:
+          brokenRefs.append(r)
+
+    # go through all files in project line by line and lint
     visited = []
     for t in self.toplevel():
-      for l in t.lint(visited=visited):
+      for l in t.lint(visited=visited, unusedLabels=unusedLabels, brokenRefs=brokenRefs):
         yield l

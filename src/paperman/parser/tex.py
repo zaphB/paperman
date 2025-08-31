@@ -262,7 +262,37 @@ class TexFile:
 
 
   @utils.cacheReturnValue
-  def lint(self, visited=[]):
+  def refs(self):
+    res = []
+    # scan through all commands that look like ref commands
+    for m in re.finditer(r'\\[^\[\]{}]*ref\s*[^\[\]{}]*\s*(\[[^[\]]*\])?{([^{}]+)}',
+                         self.content()):
+      for _s in m.groups()[-1].split():
+        if _s.strip():
+          ref = _s.strip()
+          if ref not in res:
+            res.append(ref)
+    return res
+
+
+  @utils.cacheReturnValue
+  def labels(self):
+    res = []
+    # scan through all commands that look like label commands
+    for m in re.finditer(r'\\[^\[\]{}]*label\s*[^\[\]{}]*\s*(\[[^[\]]*\])?{([^{}]+)}',
+                         self.content()):
+      for _s in m.groups()[-1].split():
+        if _s.strip():
+          label = _s.strip()
+          if label in res:
+            io.warn(f'found duplicate \\label{{{label}}} in file {self.path}')
+          else:
+            res.append(label)
+    return res
+
+
+  @utils.cacheReturnValue
+  def lint(self, visited=[], unusedLabels=[], brokenRefs=[]):
 
     # lint included files
     for i in self.includes():
@@ -299,6 +329,7 @@ class TexFile:
                  f'author name {authorName} is not in known_authors list')
 
     # go through file line by line and lint
+    currentFigureLabel = None
     for ln, l in self.enumContent():
 
       # skip lines marked as ok:
@@ -308,6 +339,28 @@ class TexFile:
       # skip commented lines
       if l.strip().startswith('%'):
         continue
+
+      # check whether every figure environment has a label, and check whether labels
+      # are within unusedLabels list
+      if re.search(r'\\begin\s*{\s*figure\s*}', l):
+        currentFigureLabel = None
+      if m:=re.search(r'\\[^\[\]{}]*label\s*[^\[\]{}]*\s*(\[[^[\]]*\])?{([^{}]+)}', l):
+        currentFigureLabel = m.groups()[-1].strip()
+        if currentFigureLabel in unusedLabels:
+          yield (self.path, ln,
+                 f'label {repr(currentFigureLabel)} is never used in a \\ref command')
+      if re.search(r'\\end\s*{\s*figure\s*}', l):
+        if not currentFigureLabel:
+          yield (self.path, ln,
+                 r'found figure environment without \label')
+
+      # check whether ref command is among broken refs list
+      if m:=re.search(r'\\[^\[\]{}]*ref\s*[^\[\]{}]*\s*(\[[^[\]]*\])?{([^{}]+)}', l):
+        ref = m.groups()[-1].strip()
+        if ref in brokenRefs:
+          yield (self.path, ln,
+                 f'no label exists for reference {repr(ref)}')
+
 
       # search for dollars without line break protection
       i = -1
