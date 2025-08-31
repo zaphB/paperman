@@ -1,17 +1,18 @@
 # Latex Project and Bibliography Management Utilities
 
 Paperman is a command line utility designed to accelerate your latex writing workflow by automating tasks as:
- * finding and copying frequently used images, bibtex entries and input tex-files from your other tex documents
+ * finding and copying frequently used images, bibtex entries and input tex-files from your other tex projects
  * identifying unused image files and bibtex entries in your latex project
  * maintaining consistent capitalization of titles in bibtex entries
  * maintaining consistent usage of ISO4 abbreviated or full journal names in .bib files
  * organizing and maintaining your personal library of .bib and .pdf files
  * syncing your library to a tablet/ereader and keeping track of your annotated files
+ * checking your tex project for unreferenced \labels, potential line breaks in math equations, custom-defined spelling conventions and more
 
 
 # Installation and configuration
 
-Paperman requires python `>=3.6` and pip installed. Install the latest paperman version with
+Paperman requires python `>=3.11` and pip installed. Install the latest paperman version with
 
 ```
 pip install paperman
@@ -26,11 +27,6 @@ pip install --upgrade paperman
 Running `paperman --version` should print the proper version number.
 
 The entire configuration of paperman is stored in one config file. The location of this file depends on the operating system an can be printed with the `paperman config` command. `paperman config -o` can be used to open the config file in the editor `vim`, if vim is installed.
-
-
-## Optional dependencies
-
-If the [pyiso4](https://github.com/pierre-24/pyiso4) package is installed, paperman will suggest automatic abbreviation if encountering a new journal for the first time.
 
 
 # Usage
